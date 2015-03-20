@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Smart Glasses</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="photo">照片</string>
+    <string name="video">视频</string>
+    <string name="setting">设置</string>
+    <string name="about_glasses">关于眼镜</string>
+    <string name="glasses">镜端</string>
+    <string name="native_photo_fragment">本地</string>
+    <string name="native_photo">本地照片</string>
+    <string name="remote_photo">镜端照片</string>
+    <string name="native_video">本地视频</string>
+    <string name="remote_video">镜端视频</string>
+    <string name="delete">删除</string>
+    <string name="download">下载</string>
+    <string name="cancel">取消</string>
+    <string name="wifi_ap_hint">浏览手机内容需要开启wifi热点功能</string>
+	<string name="turn_wifi_ap_on">现在开启</string>
+    <string name="download_notification_title">Coldwave</string>
+    <string name="title_activity_glasses_fragment">GlassesFragmentActivity</string>
+
+</resources>
