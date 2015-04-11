@@ -1,23 +1,38 @@
 package com.sctek.smartglasses.fragments;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
+
+import javax.net.ssl.HttpsURLConnection;
+
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import com.sctek.smartglasses.R;
+
+import com.sctek.smartglasses.fragments.BaseFragment.GetRemoteMediaUrlTask;
+import com.sctek.smartglasses.fragments.BaseFragment.SetWifiAPTask;
 import com.sctek.smartglasses.utils.CustomHttpClient;
 import com.sctek.smartglasses.utils.GetRemoteVideoThumbWorks;
 import com.sctek.smartglasses.utils.GlassImageDownloader;
 import com.sctek.smartglasses.utils.MediaData;
+import com.sctek.smartglasses.utils.WifiUtils;
+import com.sctek.smartglasses.R;
+
 import android.annotation.SuppressLint;
+import android.app.DownloadManager;
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -29,6 +44,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.CheckBox;
 import android.widget.Toast;
 
 //= {"http://h.hiphotos.baidu.com/image/w%3D310/sign=6c58b6e7b1119313c743f9b155380c10/a6efce1b9d16fdfa904abecbb78f8c5494ee7bf4.jpg",
@@ -55,6 +71,8 @@ public class RemoteVideoGridFragment extends BaseFragment {
 	public static final int FRAGMENT_INDEX = 4;
 	private static final String TAG = RemoteVideoGridFragment.class.getName();
 	
+	private GetRemoteMediaUrlTask mMediaUrlTask;
+	
 	@SuppressLint("NewApi")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -62,7 +80,9 @@ public class RemoteVideoGridFragment extends BaseFragment {
 		super.onCreate(savedInstanceState);
 		
 		mediaList = new ArrayList<MediaData>();
-		preApState =  getWifiAPState();
+		preApState =  WifiUtils.getWifiAPState(mWifiManager);
+		mWifiATask = new SetWifiAPTask(true, false);
+		mMediaUrlTask = new GetRemoteMediaUrlTask();
 		
 		setHasOptionsMenu(true);
 		getActivity().setTitle(R.string.remote_video);
@@ -78,7 +98,7 @@ public class RemoteVideoGridFragment extends BaseFragment {
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub
-					new GetRemoteMediaUrlTask().execute("videos");
+					new GetRemoteMediaUrlTask().execute("vedios");
 				}
 			}, 0);
 		
@@ -141,9 +161,10 @@ public class RemoteVideoGridFragment extends BaseFragment {
 		switch (item.getItemId()) {
 			case R.id.download_item:
 				deleteView.setVisibility(View.VISIBLE);
-				showImageCheckBox = true;
-				mImageAdapter.notifyDataSetChanged();
 				
+				for(CheckBox cb : checkBoxs) {
+					cb.setVisibility(View.VISIBLE);
+				}
 				deleteTv.setText(R.string.download);
 				deleteTv.setOnClickListener(onPhotoDownloadClickListener);
 				return true;
@@ -197,9 +218,16 @@ public class RemoteVideoGridFragment extends BaseFragment {
 //		}
 //	});
 	
+	@SuppressLint("NewApi")
 	public void onVideoDownloadTvClicked() {
 		
 		new VideoDownloadTask().execute();
+//		DownloadManager manager = (DownloadManager)(getActivity().getSystemService("download"));
+//		Uri uri = Uri.parse("http://192.168.43.27/data/GlassData/vedios/VID1_20150223_180915.mp4");
+//		DownloadManager.Request request = new DownloadManager.Request(uri);
+//		request.setDestinationInExternalPublicDir("SmartGlasses", "vedios/VID1_20150223_180915.mp4");
+//		request.setMimeType("vedio/mp4");
+//		manager.enqueue(request);
 		
 	}
 	
@@ -224,8 +252,14 @@ public class RemoteVideoGridFragment extends BaseFragment {
 				if(cstate == WIFI_AP_STATE_ENABLED
 						&& preApState != WIFI_AP_STATE_ENABLED) {
 					enableApView.setVisibility(View.GONE);
+					
+					BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+					if(!adapter.isEnabled()) {
+						adapter.enable();
+					}
+					
 					try {
-						new GetRemoteMediaUrlTask().execute("photos");
+						mMediaUrlTask.execute("vedios");
 					} catch (Exception e){
 						e.printStackTrace();
 					}
@@ -247,6 +281,7 @@ public class RemoteVideoGridFragment extends BaseFragment {
 	
 	private OnItemClickListener onVideoImageClickedListener = new OnItemClickListener() {
 
+		@SuppressLint("NewApi")
 		@Override
 		public void onItemClick(AdapterView<?> parent, View view, int position,
 				long id) {
@@ -266,6 +301,7 @@ private class VideoDownloadTask extends AsyncTask<String, Integer, Void> {
 		private int downloadcount;
 		private GlassImageDownloader imageDownloader;
 		
+		@SuppressLint("NewApi")
 		public VideoDownloadTask() {
 			
 			progressDialog = new ProgressDialog(getActivity());
@@ -292,7 +328,7 @@ private class VideoDownloadTask extends AsyncTask<String, Integer, Void> {
 			progressDialog.dismiss();
 			
 			if(downloadcount != 0) {
-				refreshGallery("videos");
+				refreshGallery("vedios");
 			}
 			selectedMedias.clear();
 		}
@@ -314,12 +350,12 @@ private class VideoDownloadTask extends AsyncTask<String, Integer, Void> {
 				try {
 					
 					InputStream in = imageDownloader.getInputStream(data.url);
-					
+
 					File dir = new File(VIDEO_DOWNLOAD_FOLDER);
 					if(!dir.exists())
-						dir.mkdir();
+						dir.mkdirs();
 					
-					File file = new File(VIDEO_DOWNLOAD_FOLDER, data.name);
+					File file = new File(VIDEO_DOWNLOAD_FOLDER, "123456.mp4");
 					
 					if(file.exists()) {
 						downloadcount++;
@@ -330,17 +366,15 @@ private class VideoDownloadTask extends AsyncTask<String, Integer, Void> {
 					
 					byte[] buffer = new byte[1024];
 					int len = 0;
-					
 					FileOutputStream os = new FileOutputStream(file);
 					while((len = in.read(buffer)) != -1) {
-						os.write(buffer);
+						os.write(buffer, 0, len);
 					}
+					
 					downloadcount++;
 					publishProgress();
-					
 					os.close();
 					in.close();
-					
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -350,10 +384,13 @@ private class VideoDownloadTask extends AsyncTask<String, Integer, Void> {
 		
 	}
 
-	private class PhotoDeleteTask extends AsyncTask<Void, Void, Void> {
+	protected static final String ALLOWED_URI_CHARS = "@#&=*+-_.,:!?()/~'%";
+
+	private class PhotoDeleteTask extends AsyncTask<Void, Boolean, Void> {
 		
 		private ProgressDialog mProgressDialog;
 		
+		@SuppressLint("NewApi")
 		public PhotoDeleteTask () {
 			mProgressDialog = new ProgressDialog(getActivity());
 		}
@@ -373,10 +410,22 @@ private class VideoDownloadTask extends AsyncTask<String, Integer, Void> {
 		}
 		
 		@Override
-		protected void onProgressUpdate(Void... values) {
+		protected void onProgressUpdate(Boolean... values) {
 			// TODO Auto-generated method stub
 			super.onProgressUpdate(values);
-			Toast.makeText(mContext, "connection error", Toast.LENGTH_LONG).show();
+			if(!values[0])
+				Toast.makeText(mContext, "connection error", Toast.LENGTH_LONG).show();
+			else
+			{
+				for(MediaData md : selectedMedias) {
+					int i = mediaList.indexOf(md);
+					if(i != -1)
+						mediaList.remove(i);
+				}
+//				mediaList.removeAll(selectedMedias);
+				selectedMedias.clear();
+				mImageAdapter.notifyDataSetChanged();
+			}
 		}
 		@Override
 		protected Void doInBackground(Void... params) {
@@ -393,12 +442,11 @@ private class VideoDownloadTask extends AsyncTask<String, Integer, Void> {
 			HttpClient httpClient = CustomHttpClient.getHttpClient();
 			HttpGet httpGet = new HttpGet(urlBuffer.toString());
 			if(GlassImageDownloader.deleteRequestExecute(httpClient, httpGet)) {
-				mediaList.removeAll(selectedMedias);
-				selectedMedias.clear();
-				mImageAdapter.notifyDataSetChanged();
+				publishProgress(true);
+				
 			}
 			else
-				publishProgress();
+				publishProgress(false);
 				
 			return null;
 		}

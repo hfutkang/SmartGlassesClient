@@ -9,15 +9,14 @@ import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.QueueProcessingType;
 import com.nostra13.universalimageloader.core.download.BaseImageDownloader;
 import com.nostra13.universalimageloader.utils.StorageUtils;
-import com.sctek.smartglasses.R;
 import com.sctek.smartglasses.fragments.NativePhotoGridFragment;
 import com.sctek.smartglasses.fragments.PhotoViewPagerFragment;
 
-import android.support.v4.app.FragmentActivity;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.app.FragmentActivity;
 import android.view.MenuItem;
 
 public class MainActivity extends FragmentActivity {
@@ -34,7 +33,7 @@ public class MainActivity extends FragmentActivity {
 		initImageLoader(this);
 		
 		TAG = NativePhotoGridFragment.class.getName();
-		NativePhotoGridFragment PhotoGF = (NativePhotoGridFragment)getSupportFragmentManager().findFragmentByTag(TAG);
+		NativePhotoGridFragment PhotoGF = (NativePhotoGridFragment)getFragmentManager().findFragmentByTag(TAG);
 		if(PhotoGF == null)
 			PhotoGF = new NativePhotoGridFragment();
 		
@@ -42,15 +41,21 @@ public class MainActivity extends FragmentActivity {
 		pBundle.putInt("index", NativePhotoGridFragment.FRAGMENT_INDEX);
 		PhotoGF.setArguments(pBundle);
 		
-		getSupportFragmentManager().beginTransaction().replace(android.R.id.content, 
+		getFragmentManager().beginTransaction().replace(android.R.id.content, 
 				PhotoGF, TAG).commit();
 		
 	}
 	
+	@SuppressLint("NewApi")
 	@Override
 	public void onBackPressed() {
 		// TODO Auto-generated method stub
-		super.onBackPressed();
+		
+		if(getFragmentManager().getBackStackEntryCount() != 0) {
+	        getFragmentManager().popBackStack();
+	    } else {
+	        super.onBackPressed();
+	    }
 	}
 	
 	@Override

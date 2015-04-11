@@ -22,6 +22,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
+import com.sctek.smartglasses.R;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
@@ -30,21 +31,23 @@ import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
 import com.nostra13.universalimageloader.core.download.BaseImageDownloader;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingProgressListener;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
-import com.sctek.smartglasses.R;
 import com.sctek.smartglasses.fragments.BaseFragment.GetRemoteMediaUrlTask;
 import com.sctek.smartglasses.ui.MySideNavigationCallback;
 import com.sctek.smartglasses.ui.SideNavigationView;
 import com.sctek.smartglasses.ui.TouchImageView;
 import com.sctek.smartglasses.utils.CustomHttpClient;
 import com.sctek.smartglasses.utils.GlassImageDownloader;
-import com.sctek.smartglasses.utils.MultiMediaScanner;
-import com.sctek.smartglasses.utils.XmlContentHandler;
 import com.sctek.smartglasses.utils.MediaData;
+import com.sctek.smartglasses.utils.MultiMediaScanner;
+import com.sctek.smartglasses.utils.WifiUtils;
+import com.sctek.smartglasses.utils.XmlContentHandler;
 
 import android.R.anim;
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -52,6 +55,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.audiofx.BassBoost;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
@@ -68,6 +72,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -80,6 +85,7 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
+import android.widget.CheckBox;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -109,6 +115,7 @@ public class RemotePhotoGridFragment extends BaseFragment {
 	public static final int FRAGMENT_INDEX = 3;
 	private static final String TAG = RemotePhotoGridFragment.class.getName();
 	private static final String REMOTE_PHOTO_URL = "http://192.168.5.122:7766/sdcard/DCIM/Camera/";
+	private GetRemoteMediaUrlTask mMediaUrlTask;
 	
 	@SuppressLint("NewApi")
 	@Override
@@ -117,7 +124,9 @@ public class RemotePhotoGridFragment extends BaseFragment {
 		Log.e(TAG, "onCreate");
 		
 		mediaList = new ArrayList<MediaData>();
-		preApState =  getWifiAPState();
+		preApState = WifiUtils.getWifiAPState(mWifiManager);
+		mWifiATask = new SetWifiAPTask(true, false);
+		mMediaUrlTask = new GetRemoteMediaUrlTask();
 		
 		getActivity().setTitle(R.string.remote_photo);
 		getActivity().getActionBar().setDisplayHomeAsUpEnabled(false);
@@ -165,6 +174,7 @@ public class RemotePhotoGridFragment extends BaseFragment {
 		Log.e(TAG, "onDestroy");
 		
 		mContext.unregisterReceiver(mApStateBroadcastReceiver);
+		mMediaUrlTask.cancel(true);
 		ImageLoader.getInstance().stop();
 		
 		super.onDestroy();
@@ -196,8 +206,10 @@ public class RemotePhotoGridFragment extends BaseFragment {
 		switch (item.getItemId()) {
 			case R.id.download_item:
 				deleteView.setVisibility(View.VISIBLE);
-				showImageCheckBox = true;
-				mImageAdapter.notifyDataSetChanged();
+				
+				for(CheckBox cb : checkBoxs) {
+					cb.setVisibility(View.VISIBLE);
+				}
 				
 				deleteTv.setText(R.string.download);
 				deleteTv.setOnClickListener(onPhotoDownloadClickListener);
@@ -291,14 +303,21 @@ public class RemotePhotoGridFragment extends BaseFragment {
 				if(cstate == WIFI_AP_STATE_ENABLED
 						&& preApState != WIFI_AP_STATE_ENABLED) {
 					enableApView.setVisibility(View.GONE);
+					
+					BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+					if(!adapter.isEnabled()) {
+						adapter.enable();
+					}
+					
 					try {
-						new GetRemoteMediaUrlTask().execute("photos");
+						mMediaUrlTask.execute("photos");
 					} catch (Exception e){
 						e.printStackTrace();
 					}
 				}
 				preApState = cstate;
 			}
+			
 		}
 	};
 	
@@ -315,6 +334,7 @@ public class RemotePhotoGridFragment extends BaseFragment {
 		private int downloadcount;
 		private GlassImageDownloader imageDownloader;
 		
+		@SuppressLint("NewApi")
 		public PhotoDownloadTask() {
 			
 			progressDialog = new ProgressDialog(getActivity());
@@ -366,10 +386,9 @@ public class RemotePhotoGridFragment extends BaseFragment {
 					
 					File dir = new File(PHOTO_DOWNLOAD_FOLDER);
 					if(!dir.exists())
-						dir.mkdir();
+						dir.mkdirs();
 					
 					File file = new File(PHOTO_DOWNLOAD_FOLDER, data.name);
-					
 					if(file.exists()) {
 						downloadcount++;
 						publishProgress();
@@ -377,13 +396,14 @@ public class RemotePhotoGridFragment extends BaseFragment {
 						continue;
 					}
 					
+					FileOutputStream os = new FileOutputStream(file);
+					
 					byte[] buffer = new byte[1024];
 					int len = 0;
-					
-					FileOutputStream os = new FileOutputStream(file);
 					while((len = in.read(buffer)) != -1) {
-						os.write(buffer);
+						os.write(buffer, 0, len);
 					}
+					
 					downloadcount++;
 					publishProgress();
 					
@@ -399,10 +419,11 @@ public class RemotePhotoGridFragment extends BaseFragment {
 		
 	}
 	
-	private class PhotoDeleteTask extends AsyncTask<Void, Void, Void> {
+	private class PhotoDeleteTask extends AsyncTask<Void, Boolean, Void> {
 		
 		private ProgressDialog mProgressDialog;
 		
+		@SuppressLint("NewApi")
 		public PhotoDeleteTask () {
 			mProgressDialog = new ProgressDialog(getActivity());
 		}
@@ -422,10 +443,22 @@ public class RemotePhotoGridFragment extends BaseFragment {
 		}
 		
 		@Override
-		protected void onProgressUpdate(Void... values) {
+		protected void onProgressUpdate(Boolean... values) {
 			// TODO Auto-generated method stub
 			super.onProgressUpdate(values);
-			Toast.makeText(mContext, "connection error", Toast.LENGTH_LONG).show();
+			if(!values[0])
+				Toast.makeText(mContext, "connection error", Toast.LENGTH_LONG).show();
+			else
+			{
+//				mediaList.removeAll(selectedMedias);
+				for(MediaData md : selectedMedias) {
+					int i = mediaList.indexOf(md);
+					if(i != -1)
+						mediaList.remove(i);
+				}
+				selectedMedias.clear();
+				mImageAdapter.notifyDataSetChanged();
+			}
 		}
 		@Override
 		protected Void doInBackground(Void... params) {
@@ -442,12 +475,10 @@ public class RemotePhotoGridFragment extends BaseFragment {
 			HttpClient httpClient = CustomHttpClient.getHttpClient();
 			HttpGet httpGet = new HttpGet(urlBuffer.toString());
 			if(GlassImageDownloader.deleteRequestExecute(httpClient, httpGet)) {
-				mediaList.removeAll(selectedMedias);
-				selectedMedias.clear();
-				mImageAdapter.notifyDataSetChanged();
+				publishProgress(true);
 			}
 			else
-				publishProgress();
+				publishProgress(false);
 				
 			return null;
 		}

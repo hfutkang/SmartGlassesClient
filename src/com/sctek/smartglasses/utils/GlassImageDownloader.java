@@ -15,8 +15,11 @@ import org.apache.http.client.methods.HttpGet;
 import com.nostra13.universalimageloader.utils.IoUtils;
 
 import android.net.Uri;
+import android.util.Log;
 
 public class GlassImageDownloader {
+	
+	public static final String TAG = "GlassImageDownloader";
 	
 	public static final int DEFAULT_HTTP_CONNECT_TIMEOUT = 5 * 1000; // milliseconds
 	
@@ -30,14 +33,16 @@ public class GlassImageDownloader {
 		
 		HttpURLConnection conn = createConnection(uri);
 		
-		int redirectCount = 0;
-		while (conn.getResponseCode() / 100 == 3 && redirectCount < MAX_REDIRECT_COUNT) {
-			conn = createConnection(conn.getHeaderField("Location"));
-			redirectCount++;
-		}
-		
+//		int redirectCount = 0;
+//		while (conn.getResponseCode() / 100 == 3 && redirectCount < MAX_REDIRECT_COUNT) {
+//			conn = createConnection(conn.getHeaderField("Location"));
+//			redirectCount++;
+//		}
+//		
 		InputStream imageStream;
 		try {
+			conn.setDoInput(true); 
+			conn.connect();
 			imageStream = conn.getInputStream();
 		} catch (IOException e) {
 			// Read all data to allow reuse connection (http://bit.ly/1ad35PY)
@@ -49,7 +54,7 @@ public class GlassImageDownloader {
 			throw new IOException("Image request failed with response code " + conn.getResponseCode());
 		}
 
-		return new BufferedInputStream(imageStream);
+		return imageStream;
 	}
 	
 	public HttpURLConnection createConnection(String url) throws IOException {
@@ -58,6 +63,7 @@ public class GlassImageDownloader {
 		HttpURLConnection conn = (HttpURLConnection) new URL(encodedUrl).openConnection();
 		conn.setConnectTimeout(DEFAULT_HTTP_CONNECT_TIMEOUT);
 		conn.setReadTimeout(DEFAULT_HTTP_READ_TIMEOUT);
+		
 		return conn;
 		
 	}
@@ -79,7 +85,8 @@ public class GlassImageDownloader {
 				result.append(line);
 			}
 			in.close();
-			
+			if(result != null)
+				Log.e(TAG, result.toString());
 			return true;
 		}catch (Exception e) {
 			e.printStackTrace();

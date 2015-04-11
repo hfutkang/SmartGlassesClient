@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Settings screen that lets the user manage the canned responses
+     for the "Respond via SMS" feature; see RespondViaSmsManager.java -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+     android:title="@string/respond_via_sms_setting_title_2">
+
+    <cn.ingenic.glasssync.phone.MultiLineTitleEditTextPreference
+        android:key="canned_response_pref_1"
+        android:defaultValue="@string/respond_via_sms_canned_response_1"
+        android:dialogTitle="@string/respond_via_sms_edittext_dialog_title" />
+
+    <cn.ingenic.glasssync.phone.MultiLineTitleEditTextPreference
+        android:key="canned_response_pref_2"
+        android:defaultValue="@string/respond_via_sms_canned_response_2"
+        android:dialogTitle="@string/respond_via_sms_edittext_dialog_title" />
+
+    <cn.ingenic.glasssync.phone.MultiLineTitleEditTextPreference
+        android:key="canned_response_pref_3"
+        android:defaultValue="@string/respond_via_sms_canned_response_3"
+        android:dialogTitle="@string/respond_via_sms_edittext_dialog_title" />
+
+    <cn.ingenic.glasssync.phone.MultiLineTitleEditTextPreference
+        android:key="canned_response_pref_4"
+        android:defaultValue="@string/respond_via_sms_canned_response_4"
+        android:dialogTitle="@string/respond_via_sms_edittext_dialog_title" />
+
+	<PreferenceScreen
+		android:key="sync_via_sms"
+		android:title="@string/sync_via_sms"
+		android:summary="@string/sync_via_sms_content"/>
+</PreferenceScreen>

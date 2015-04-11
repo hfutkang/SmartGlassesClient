@@ -23,10 +23,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
-import com.ingenic.glass.api.sync.SyncChannel;
-import com.ingenic.glass.api.sync.SyncChannel.CONNECTION_STATE;
-import com.ingenic.glass.api.sync.SyncChannel.Packet;
-import com.ingenic.glass.api.sync.SyncChannel.RESULT;
+import com.sctek.smartglasses.R;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
@@ -37,21 +34,24 @@ import com.nostra13.universalimageloader.core.download.ImageDownloader;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingProgressListener;
 import com.nostra13.universalimageloader.core.listener.PauseOnScrollListener;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
-import com.sctek.smartglasses.R;
 import com.sctek.smartglasses.ui.MySideNavigationCallback;
 import com.sctek.smartglasses.ui.SideNavigationView;
 import com.sctek.smartglasses.ui.TouchImageView;
 import com.sctek.smartglasses.utils.CustomHttpClient;
 import com.sctek.smartglasses.utils.GetRemoteVideoThumbWorks;
-import com.sctek.smartglasses.utils.GetRemoteVideoThumbWorks.GetRemoteVideoThumbListener;
 import com.sctek.smartglasses.utils.MediaData;
 import com.sctek.smartglasses.utils.MultiMediaScanner;
+import com.sctek.smartglasses.utils.WifiUtils;
 import com.sctek.smartglasses.utils.XmlContentHandler;
+import com.sctek.smartglasses.utils.GetRemoteVideoThumbWorks.GetRemoteVideoThumbListener;
 
 import android.R.anim;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.DownloadManager;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
@@ -73,11 +73,6 @@ import android.os.Handler;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -120,37 +115,36 @@ import android.widget.Toast;
 //		"http://h.hiphotos.baidu.com/image/pic/item/024f78f0f736afc3f61b6c40b019ebc4b74512fb.jpg",
 //		"http://f.hiphotos.baidu.com/image/pic/item/b219ebc4b74543a9170ca9e91d178a82b90114fb.jpg"};
 
+@SuppressLint("NewApi")
 public class BaseFragment extends Fragment {
 	
 	public static final String TAG = BaseFragment.class.getName();
 	
 	public static final String URL_PREFIX = "http://192.168.5.122/";
 	
-	public static final String PHOTO_DOWNLOAD_FOLDER = "/SmartGlasses/photos/";
-	public static final String VIDEO_DOWNLOAD_FOLDER = "/SmartGlasses/videos";
+	public static final String PHOTO_DOWNLOAD_FOLDER = 
+			Environment.getExternalStorageDirectory().toString()	+ "/SmartGlasses/photos/";
+	public static final String VIDEO_DOWNLOAD_FOLDER = 
+			Environment.getExternalStorageDirectory().toString()	+ "/SmartGlasses/vedios";
 	
 	public static final String EXTERNEL_DIRCTORY_PATH = 
 			Environment.getExternalStorageDirectory() + "/SmartGlasses/photos/";
 	
-	protected static final int WIFI_AP_STATE_UNKNOWN = -1;
-	protected static final int WIFI_AP_STATE_DISABLING = 10;
 	protected static final int WIFI_AP_STATE_DISABLED = 11;
-	protected static final int WIFI_AP_STATE_ENABLING = 12;
 	protected static final int WIFI_AP_STATE_ENABLED = 13;
-	protected static final int WIFI_AP_STATE_FAILED = 14;
 	
 	public static final String WIFI_AP_STATE_CHANGED_ACTION =
 	        "android.net.wifi.WIFI_AP_STATE_CHANGED";
 	public static final String EXTRA_WIFI_AP_STATE = "wifi_state";
 	public static final String EXTRA_PREVIOUS_WIFI_AP_STATE = "previous_wifi_state";
-	
-	private static final String GLASS_MAC = "d0:31:10:f2:c1:66";
     
 	public ArrayList<MediaData> mediaList;
 	
 	public ArrayList<MediaData> selectedMedias;
 	
 	public HashMap<Long, String> downloadIdImageMap;
+	
+	public ArrayList<CheckBox> checkBoxs;
 	
 	private DisplayImageOptions options;
 	
@@ -169,11 +163,12 @@ public class BaseFragment extends Fragment {
 	
 	private int childIndex;
 	
-	private WifiManager mWifiManager;
-	private SyncChannel mChannel;
+	public WifiManager mWifiManager;
+//	public SyncChannel mChannel;
 	
 	public Context mContext;
 	public int preApState;
+	public SetWifiAPTask mWifiATask;
 	
 	@SuppressLint("NewApi")
 	@Override
@@ -198,9 +193,10 @@ public class BaseFragment extends Fragment {
 		showImageCheckBox = false;
 		mImageAdapter = new ImageAdapter();
 		downloadIdImageMap = new HashMap<Long, String>();
+		checkBoxs = new ArrayList<CheckBox>();
 		
 		mWifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
-		mChannel = SyncChannel.create("00e04c68229b0", mContext, mOnSyncListener);
+//		mChannel = SyncChannel.create("00e04c68229b0", mContext, mOnSyncListener);
 		
 	}
 	
@@ -239,7 +235,7 @@ public class BaseFragment extends Fragment {
 			case RemotePhotoGridFragment.FRAGMENT_INDEX:
 				grid.setOnScrollListener(new PauseOnScrollListener(ImageLoader.getInstance(), true, false));
 				grid.setOnItemClickListener(onPhotoImageClickedListener);
-				if(WIFI_AP_STATE_DISABLED == getWifiAPState())
+				if(WIFI_AP_STATE_DISABLED == WifiUtils.getWifiAPState(mWifiManager))
 					enableApView.setVisibility(View.VISIBLE);
 				break;
 			case NativeVideoGridFragment.FRAGMENT_INDEX:
@@ -248,7 +244,7 @@ public class BaseFragment extends Fragment {
 				break;
 			case RemoteVideoGridFragment.FRAGMENT_INDEX:
 				grid.setOnItemClickListener(onVideoImageClickedListener);
-				if(WIFI_AP_STATE_DISABLED == getWifiAPState())
+				if(WIFI_AP_STATE_DISABLED == WifiUtils.getWifiAPState(mWifiManager))
 					enableApView.setVisibility(View.VISIBLE);
 				break;
 		}
@@ -360,6 +356,8 @@ public class BaseFragment extends Fragment {
 				
 				view.setTag(holder);
 				
+				checkBoxs.add(holder.imageCb);
+				
 			} else {
 				holder = (ViewHolder) view.getTag();
 			}
@@ -377,10 +375,17 @@ public class BaseFragment extends Fragment {
 				}
 			});
 			
-			if(showImageCheckBox)
-				holder.imageCb.setVisibility(View.VISIBLE);
-			else
-				holder.imageCb.setVisibility(View.GONE);
+			if(selectedMedias.contains(mediaList.get(mPositoin))) {
+				holder.imageCb.setChecked(true);
+			} 
+			else {
+				holder.imageCb.setChecked(false);
+			}
+			
+//			if(showImageCheckBox)
+//				holder.imageCb.setVisibility(View.VISIBLE);
+//			else
+//				holder.imageCb.setVisibility(View.GONE);
 			
 			if(childIndex != RemoteVideoGridFragment.FRAGMENT_INDEX) {
 				ImageLoader.getInstance()
@@ -445,7 +450,7 @@ public class BaseFragment extends Fragment {
 		public void onItemClick(AdapterView<?> parent, View view, int position,
 				long id) {
 			// TODO Auto-generated method stub
-			FragmentManager fragManager = getActivity().getSupportFragmentManager();
+			FragmentManager fragManager = getActivity().getFragmentManager();
 			FragmentTransaction transcaction = fragManager.beginTransaction();
 			String tag = PhotoViewPagerFragment.class.getName();
 			PhotoViewPagerFragment photoFm = (PhotoViewPagerFragment)fragManager.findFragmentByTag(tag);
@@ -483,9 +488,56 @@ public class BaseFragment extends Fragment {
 		@Override
 		public void onClick(View v) {
 			// TODO Auto-generated method stub
-			turnWifiApOn();
+			try {
+			mWifiATask.execute();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	};
+	
+	public class SetWifiAPTask extends AsyncTask<Void, Void, Void> {
+    	
+		private boolean mMode;
+		private boolean mFinish;
+		private ProgressDialog d = new ProgressDialog(getActivity());
+		
+		public SetWifiAPTask(boolean mode, boolean finish) {
+		    mMode = mode;
+		    mFinish = finish;
+		}
+
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+			d.setTitle("Turning WiFi AP " + (mMode?"on":"off") + "...");
+			d.setMessage("...please wait a moment.");
+			try {
+			d.show();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		protected void onPostExecute(Void aVoid) {
+			super.onPostExecute(aVoid);
+			try {d.dismiss();} catch (IllegalArgumentException e) {};
+			//updateStatusDisplay();
+//			if (mFinish) mContext.finish();
+		}
+
+		@Override
+		protected Void doInBackground(Void... params) {
+			Log.e(TAG, "1234");
+			try {
+				WifiUtils.turnWifiApOn(getActivity(), mWifiManager);
+			} catch(Exception e) {
+				e.printStackTrace();
+			}
+		    return null;
+		}
+    }
 	
 	private void initNavigationMenu(View view) {
 		
@@ -496,9 +548,14 @@ public class BaseFragment extends Fragment {
 	}
 	
 	public void onCancelTvClicked() {
-		showImageCheckBox = false;
+//		showImageCheckBox = false;
 		deleteView.setVisibility(View.GONE);
-		mImageAdapter.notifyDataSetChanged();
+//		mImageAdapter.notifyDataSetChanged();
+		for(CheckBox cb : checkBoxs) {
+			cb.setVisibility(View.GONE);
+		}
+		
+		selectedMedias.clear();
 	}
 	
 	public void onNativePhotoDeleteTvClicked(String type) {
@@ -534,7 +591,12 @@ public class BaseFragment extends Fragment {
 		MultiMediaScanner scanner = new MultiMediaScanner(mContext, imagesPath, null);
 		scanner.connect();
 		
-		mediaList.removeAll(selectedMedias);
+		for(MediaData md : selectedMedias) {
+			int i = mediaList.indexOf(md);
+			if(i != -1)
+				mediaList.remove(i);
+		}
+//		mediaList.removeAll(selectedMedias);
 		selectedMedias.clear();
 		mImageAdapter.notifyDataSetChanged();
 		
@@ -569,103 +631,6 @@ public class BaseFragment extends Fragment {
 		return ids;
 	}
 	
-	private void turnWifiApOn() {
-		
-		WifiConfiguration wcfg = new WifiConfiguration();
-		wcfg.SSID = new String("glass_ap");
-		wcfg.networkId = 1;
-		wcfg.allowedAuthAlgorithms.clear();
-		wcfg.allowedGroupCiphers.clear();
-		wcfg.allowedKeyManagement.clear();
-		wcfg.allowedPairwiseCiphers.clear();
-		wcfg.allowedProtocols.clear();
-        
-		//wcfg.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN, true);
-		wcfg.wepKeys[0] = "";    
-		wcfg.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);    
-		wcfg.wepTxKeyIndex = 0;
-		
-		try {
-			Method method = mWifiManager.getClass().getMethod("setWifiApConfiguration", wcfg.getClass());
-			                                           
-			Boolean rt = (Boolean)method.invoke(mWifiManager, wcfg);
-			Log.d("setconfig", " " + rt);
-		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			Log.d("setconfig", " no method");
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			Log.d("setconfig", " illegeal argument");
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			Log.d("setconfig", " illegal access");
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			Log.d("setconfig", " invocation failed");
-			e.printStackTrace();
-		}
-		toggleWifi();
-	}
-	
-	private void toggleWifi() {
-        boolean wifiApIsOn = getWifiAPState()==WIFI_AP_STATE_ENABLED || getWifiAPState()==WIFI_AP_STATE_ENABLING;
-        new SetWifiAPTask(!wifiApIsOn,false).execute();
-    }
-	
-	public int getWifiAPState() {
-			int state = WIFI_AP_STATE_UNKNOWN;
-			try {
-				Method method2 = mWifiManager.getClass().getMethod("getWifiApState");
-				state = (Integer) method2.invoke(mWifiManager);
-			} catch (Exception e) {}
-			Log.d("WifiAP", "getWifiAPState.state " + state);
-			return state;
-    }
-	
-	private int setWifiApEnabled(boolean enabled) {
-		
-		Log.d("WifiAP", "*** setWifiApEnabled CALLED **** " + enabled);
-		if (enabled && mWifiManager.getConnectionInfo() !=null) {
-			mWifiManager.setWifiEnabled(false);
-			
-			try {Thread.sleep(1500);} catch (Exception e) {}
-		}
-		
-		int state = WIFI_AP_STATE_UNKNOWN;
-		try {
-			mWifiManager.setWifiEnabled(false);
-			Method method1 = mWifiManager.getClass().getMethod("setWifiApEnabled",
-			    WifiConfiguration.class, boolean.class);
-			method1.invoke(mWifiManager, null, enabled); // true
-			Method method2 = mWifiManager.getClass().getMethod("getWifiApState");
-			state = (Integer) method2.invoke(mWifiManager);
-		} catch (Exception e) {
-			Log.e(TAG, e.getMessage());
-		}
-		
-		if (!enabled) {
-			int loopMax = 10;
-			while (loopMax>0 && (getWifiAPState()==WIFI_AP_STATE_DISABLING
-					|| getWifiAPState()==WIFI_AP_STATE_ENABLED
-					|| getWifiAPState()==WIFI_AP_STATE_FAILED)) {
-						try {Thread.sleep(500);loopMax--;} catch (Exception e) {}
-			}
-			mWifiManager.setWifiEnabled(true);
-		} 
-		else if (enabled) {
-			int loopMax = 10;
-			while (loopMax>0 && (getWifiAPState()==WIFI_AP_STATE_ENABLING
-					|| getWifiAPState()==WIFI_AP_STATE_DISABLED
-					|| getWifiAPState()==WIFI_AP_STATE_FAILED)) {
-						try {Thread.sleep(500);loopMax--;} catch (Exception e) {}
-			}
-		}
-		return state;
-	}
-	
 	class GetRemoteMediaUrlTask extends AsyncTask<String, Integer, String> {
 
 		private ProgressDialog mProgressDialog ;
@@ -693,6 +658,8 @@ public class BaseFragment extends Fragment {
 			// TODO Auto-generated method stub
 			String ip = null;
 			while((ip = getConnectedGlassIP()) == null) {
+				if(isCancelled())
+					return null;
 				try {
 					Thread.sleep(3000);
 				} catch (Exception e) {
@@ -721,91 +688,29 @@ public class BaseFragment extends Fragment {
 		
 	}
     
-    class SetWifiAPTask extends AsyncTask<Void, Void, Void> {
-    	
-		private boolean mMode;
-		private boolean mFinish;
-		private ProgressDialog d = new ProgressDialog(getActivity());
-		
-		public SetWifiAPTask(boolean mode, boolean finish) {
-		    mMode = mode;
-		    mFinish = finish;
-		}
-
-		@Override
-		protected void onPreExecute() {
-			super.onPreExecute();
-			d.setTitle("Turning WiFi AP " + (mMode?"on":"off") + "...");
-			d.setMessage("...please wait a moment.");
-			try {
-			d.show();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		@Override
-		protected void onPostExecute(Void aVoid) {
-			super.onPostExecute(aVoid);
-			try {d.dismiss();} catch (IllegalArgumentException e) {};
-			//updateStatusDisplay();
-//			if (mFinish) mContext.finish();
-		}
-
-		@Override
-		protected Void doInBackground(Void... params) {
-		    setWifiApEnabled(mMode);
-		    return null;
-		}
-    }
-    
-    private MyOnSyncListener mOnSyncListener = new MyOnSyncListener();
-	private class MyOnSyncListener implements SyncChannel.onChannelListener {
-
-		@Override
-		public void onReceive(RESULT arg0, Packet arg1) {
-			// TODO Auto-generated method stub
-			String ip = "Glass ip:" + arg1.getString("ip");
-			Log.e(TAG, "onReceive:" + ip);
-			Toast.makeText(mContext, ip, Toast.LENGTH_LONG).show();
-		}
-
-		@Override
-		public void onSendCompleted(RESULT arg0, Packet arg1) {
-			// TODO Auto-generated method stub
-
-			Log.e(TAG, "onSendCompleted:" + arg1.getString("version"));
-		}
-
-		@Override
-		public void onStateChanged(CONNECTION_STATE arg0) {
-			// TODO Auto-generated method stub
-			Log.e(TAG, "onStateChanged:" + arg0.toString());
-		}
-		
-	}
-	
-	public BroadcastReceiver mDownloadBroadcastReceiver = new BroadcastReceiver() {
-		
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			// TODO Auto-generated method stub
-			if(DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction())) {
-				ContentResolver cr = mContext.getContentResolver();
-				long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
-				if(!downloadIdImageMap.containsKey(id))
-					return;
-				String imageName = downloadIdImageMap.get(id);
-				String imagePath = EXTERNEL_DIRCTORY_PATH + imageName;
-				try {
-					MediaStore.Images.Media.insertImage(cr, imagePath, imageName, null	);
-				} catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			} 
-		}
-	};
+//	private MyOnSyncListener mOnSyncListener = new MyOnSyncListener();
+//	private class MyOnSyncListener implements SyncChannel.onChannelListener {
+//	
+//		@Override
+//		public void onReceive(RESULT arg0, Packet arg1) {
+//			// TODO Auto-generated method stub
+//			Log.e(TAG, "Channel onReceive");
+//		}
+//	
+//		@Override
+//		public void onSendCompleted(RESULT arg0, Packet arg1) {
+//			// TODO Auto-generated method stub
+//			
+//			Log.e(TAG, "onSendCompleted");
+//		}
+//	
+//		@Override
+//		public void onStateChanged(CONNECTION_STATE arg0) {
+//			// TODO Auto-generated method stub
+//			Log.e(TAG, "onStateChanged:" + arg0.toString());
+//		}
+//		
+//	}
 	
 	public String getConnectedGlassIP() { 
 		
@@ -814,10 +719,11 @@ public class BaseFragment extends Fragment {
 		String ip = null;
 		try {  
 			br = new BufferedReader(new FileReader("/proc/net/arp"));
-			while ((line = br.readLine()) != null) {  
+			while ((line = br.readLine()) != null) { 
 				String[] splitted = line.split(" +");
-				if (GLASS_MAC.equals(splitted[3])) {
+				if (!"IP".equals(splitted[0])) {
 					ip = splitted[0];
+					break;
 				}
 			}
 			br.close();
@@ -831,6 +737,7 @@ public class BaseFragment extends Fragment {
 		
 //		String mip = "192.168.5.122";
 		String uri = String.format("http://" + ip + "/cgi-bin/listfiles?%s", type);
+		Log.e(TAG,uri);
 //		String uri = String.format("http://%s:7766/data/apache/GlassData/photos", ip);
 		final HttpClient httpClient = CustomHttpClient.getHttpClient();
 		final HttpGet httpGet = new HttpGet(uri);

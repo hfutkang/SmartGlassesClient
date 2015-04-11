@@ -3,6 +3,7 @@ package com.sctek.smartglasses.fragments;
 import java.io.File;
 import java.util.ArrayList;
 
+import com.sctek.smartglasses.R;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
@@ -10,7 +11,6 @@ import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingProgressListener;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
-import com.sctek.smartglasses.R;
 import com.sctek.smartglasses.ui.MySideNavigationCallback;
 import com.sctek.smartglasses.ui.SideNavigationView;
 import com.sctek.smartglasses.ui.TouchImageView;
@@ -19,6 +19,8 @@ import com.sctek.smartglasses.utils.MultiMediaScanner;
 
 import android.R.anim;
 import android.annotation.SuppressLint;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -26,12 +28,10 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
@@ -46,6 +46,7 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
+import android.widget.CheckBox;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -75,11 +76,14 @@ public class NativeVideoGridFragment extends BaseFragment {
 	public static final int FRAGMENT_INDEX = 2;
 	private static final String TAG = NativeVideoGridFragment.class.getName();
 	
+	private boolean onCreate;
+	
 	@SuppressLint("NewApi")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		Log.e(TAG, "onCreate");
 		
+		onCreate = true;
 		getVideoPath();
 		
 		
@@ -103,6 +107,21 @@ public class NativeVideoGridFragment extends BaseFragment {
 		getActivity().setTitle(R.string.native_video);
 		getActivity().getActionBar().setDisplayHomeAsUpEnabled(true);
 		getActivity().getActionBar().setHomeButtonEnabled(true);
+		
+		if(!onCreate) {
+			new Handler().post(new Runnable() {
+				
+				@Override
+				public void run() {
+					// TODO Auto-generated method stub
+					getVideoPath();
+					mImageAdapter.notifyDataSetChanged();
+				}
+			});
+			
+		}
+		
+		onCreate = false;
 		super.onResume();
 	}
 	
@@ -148,8 +167,10 @@ public class NativeVideoGridFragment extends BaseFragment {
 				return true;
 			case R.id.native_video_delete_item:
 				deleteView.setVisibility(View.VISIBLE);
-				showImageCheckBox = true;
-				mImageAdapter.notifyDataSetChanged();
+				
+				for(CheckBox cb : checkBoxs) {
+					cb.setVisibility(View.VISIBLE);
+				}
 				
 				deleteTv.setText(R.string.delete);
 				deleteTv.setOnClickListener(onNativeVideoDeleteTvClickListener);
@@ -159,12 +180,13 @@ public class NativeVideoGridFragment extends BaseFragment {
 		}
 	}
 	
+	@SuppressLint("NewApi")
 	private void getVideoPath() {
 		
-//		String imagesPath[] = new String[]{"/storage/emulated/0/SmartGlasses/videos/VID_20150223_180915.mp4",
-//				"/storage/emulated/0/SmartGlasses/videos/VID_20150219_000231.mp4",
-//				"/storage/emulated/0/SmartGlasses/videos/VID_20150219_000020.mp4",
-//				"/storage/emulated/0/SmartGlasses/videos/VID_20150219_000400.mp4"};
+//		String imagesPath[] = new String[]{"/storage/emulated/0/SmartGlasses/vedios/VID_20150223_180915.mp4",
+//				"/storage/emulated/0/SmartGlasses/vedios/VID_20150219_000231.mp4",
+//				"/storage/emulated/0/SmartGlasses/vedios/VID_20150219_000020.mp4",
+//				"/storage/emulated/0/SmartGlasses/vedios/VID_20150219_000400.mp4"};
 //		MultiMediaScanner s = new MultiMediaScanner(getActivity(), imagesPath, null);
 //		s.connect();
 		mediaList = new ArrayList<MediaData>();
@@ -173,7 +195,7 @@ public class NativeVideoGridFragment extends BaseFragment {
 		Cursor cursor = cr.query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
 				new String[]{MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DISPLAY_NAME}, 
 				MediaStore.MediaColumns.DATA + " like ?", 
-				new String[]{"%/SmartGlasses/videos%"}, null);
+				new String[]{"%/SmartGlasses/vedios%"}, null);
 		
 		while(cursor.moveToNext()) {
 			
@@ -186,9 +208,10 @@ public class NativeVideoGridFragment extends BaseFragment {
 		
 	}
 	
+	@SuppressLint("NewApi")
 	private void showRemoteVideoFragment() {
 		
-		FragmentManager fragManager = getActivity().getSupportFragmentManager();
+		FragmentManager fragManager = getActivity().getFragmentManager();
 		FragmentTransaction transcaction = fragManager.beginTransaction();
 		String tag = RemoteVideoGridFragment.class.getName();
 		RemoteVideoGridFragment remoteVideoFm = (RemoteVideoGridFragment)fragManager.findFragmentByTag(tag);
@@ -209,7 +232,7 @@ public class NativeVideoGridFragment extends BaseFragment {
 		@Override
 		public void onClick(View v) {
 			// TODO Auto-generated method stub
-			onNativePhotoDeleteTvClicked("videos");
+			onNativePhotoDeleteTvClicked("vedios");
 			onCancelTvClicked();
 		}
 	};

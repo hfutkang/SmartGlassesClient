@@ -17,7 +17,7 @@ public class XmlContentHandler extends DefaultHandler {
 	
 	private final static String TAG = "XmlContentHandler";
 	private final static String IMAGE_PREFIX = "http://%s/data/GlassData/photos/";
-	private final static String VEDIO_PREFIX = "http://%s/data/GlassData/videos/";
+	private final static String VEDIO_PREFIX = "http://%s/data/GlassData/vedios/";
 	
 	private String nodeName;
 	private ArrayList<MediaData> mediaList;
@@ -46,7 +46,7 @@ public class XmlContentHandler extends DefaultHandler {
 		// TODO Auto-generated method stub
 		super.startElement(uri, localName, qName, attributes);
 		nodeName = localName;
-		if("videos".equals(nodeName))
+		if("vedios".equals(nodeName))
 			urlPrefix = String.format(VEDIO_PREFIX, ip);
 	}
 	

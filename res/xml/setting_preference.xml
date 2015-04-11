@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="@string/vedio">
+        
+        <SwitchPreference 
+            android:defaultValue="true"
+            android:key="default_switch"
+            android:title="@string/default_switch"
+            android:summary="@string/default_switch_summary"/>
+        
+        <ListPreference 
+            android:title="@string/vedio_duration"
+            android:defaultValue="10"
+            android:entries="@array/vedio_durations"
+            android:entryValues="@array/vedio_durations"
+            android:key="duration"
+            android:summary="@string/vedio_duration_summary"/>
+        
+        <SwitchPreference 
+            android:title="@string/electric_anti_shake"
+            android:key="anti_shake"
+            android:summary="@string/anti_shake_summary"
+            android:defaultValue="false"/>
+        
+        <SwitchPreference 
+            android:title="@string/vedio_timestamp"
+            android:key="timestamp"
+            android:summary="@string/vedio_timestamp_summary"
+            android:defaultValue="false"/>
+        
+        <ListPreference 
+            android:title="@string/media_pixel"
+            android:key="vedio_pixel"
+            android:defaultValue="1"
+            android:entries="@array/vedio_pixel_entry"
+            android:entryValues="@array/media_pixel_values"
+            android:summary="@string/vedio_pixel_summary"/>
+        
+       </PreferenceCategory>
+        
+		<PreferenceCategory android:title="@string/photo" >
+		         
+			<ListPreference 
+				android:title="@string/media_pixel"
+				android:key="photo_pixel"
+				android:defaultValue="1"
+				android:entries="@array/photo_pixel_entry"
+				android:entryValues="@array/media_pixel_values"
+				android:summary="@string/photo_pixel_summary"/>
+		</PreferenceCategory>
+
+</PreferenceScreen>

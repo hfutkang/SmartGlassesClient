@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import org.xmlpull.v1.XmlPullParser;
 
 import com.sctek.smartglasses.R;
-
 import android.content.Context;
 import android.content.res.XmlResourceParser;
 import android.util.AttributeSet;

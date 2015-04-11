@@ -3,6 +3,7 @@ package com.sctek.smartglasses.fragments;
 import java.io.File;
 import java.util.ArrayList;
 
+import com.sctek.smartglasses.R;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
@@ -11,13 +12,13 @@ import com.nostra13.universalimageloader.core.assist.ViewScaleType;
 import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
 import com.nostra13.universalimageloader.core.imageaware.ImageAware;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
-import com.sctek.smartglasses.R;
 import com.sctek.smartglasses.ui.MySideNavigationCallback;
 import com.sctek.smartglasses.ui.SideNavigationView;
 import com.sctek.smartglasses.ui.TouchImageView;
 import com.sctek.smartglasses.utils.MediaData;
 
 import android.annotation.SuppressLint;
+import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -25,7 +26,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
 import android.provider.OpenableColumns;
-import android.support.v4.app.Fragment;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
@@ -39,6 +39,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+@SuppressLint("NewApi")
 public class PhotoViewPagerFragment extends Fragment {
 	
 	public static final int FRAGMENT_INDEX = 0;
@@ -117,6 +118,7 @@ public class PhotoViewPagerFragment extends Fragment {
 		super.onDestroy();
 	}
 	
+	@SuppressLint("NewApi")
 	@Override
 	public void onDestroyView() {
 		// TODO Auto-generated method stub

@@ -1,10 +1,10 @@
 package com.sctek.smartglasses.ui;
 
 import com.sctek.smartglasses.R;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.ViewGroup.LayoutParams;
 
@@ -58,10 +58,13 @@ public class BaseActivity extends ActionBarActivity {
 				finish();
 				break;
 			case R.id.video_item:
+				Log.e(TAG, "video");
 				break;
 			case R.id.setting_item:
+				Log.e(TAG, "setting");
 				break;
 			case R.id.about_item:
+				Log.e(TAG, "about");
 				break;
 			default:
 				break;

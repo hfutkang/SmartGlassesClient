@@ -1,21 +1,25 @@
 package com.sctek.smartglasses.fragments;
 
 import java.util.ArrayList;
-import com.sctek.smartglasses.R;
+
 import com.sctek.smartglasses.utils.MediaData;
+import com.sctek.smartglasses.R;
+
 import android.annotation.SuppressLint;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.CheckBox;
 
 //= {"http://h.hiphotos.baidu.com/image/w%3D310/sign=6c58b6e7b1119313c743f9b155380c10/a6efce1b9d16fdfa904abecbb78f8c5494ee7bf4.jpg",
 //		"http://d.hiphotos.baidu.com/image/pic/item/d0c8a786c9177f3e3455af2873cf3bc79f3d56b5.jpg",
@@ -40,6 +44,7 @@ public class NativePhotoGridFragment extends BaseFragment {
 	
 	public static final int FRAGMENT_INDEX = 1;
 	private static final String TAG = NativePhotoGridFragment.class.getName();
+	private boolean onCreate;
 	
 	@SuppressLint("NewApi")
 	@Override
@@ -47,6 +52,7 @@ public class NativePhotoGridFragment extends BaseFragment {
 		super.onCreate(savedInstanceState);
 		Log.e(TAG, "onCreate");
 		
+		onCreate = true;
 		getImagePath();
 //		IntentFilter filter = new IntentFilter();
 //		filter.addAction(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
@@ -69,6 +75,22 @@ public class NativePhotoGridFragment extends BaseFragment {
 		getActivity().setTitle(R.string.native_photo);
 		getActivity().getActionBar().setDisplayHomeAsUpEnabled(true);
 		getActivity().getActionBar().setHomeButtonEnabled(true);
+		
+		if(!onCreate) {
+			new Handler().post(new Runnable() {
+				
+				@Override
+				public void run() {
+					// TODO Auto-generated method stub
+					getImagePath();
+					mImageAdapter.notifyDataSetChanged();
+				}
+			});
+			
+		}
+		
+		onCreate = false;
+			
 		super.onResume();
 	}
 	
@@ -115,8 +137,10 @@ public class NativePhotoGridFragment extends BaseFragment {
 				return true;
 			case R.id.native_photo_delete_item:
 				deleteView.setVisibility(View.VISIBLE);
-				showImageCheckBox = true;
-				mImageAdapter.notifyDataSetChanged();
+				
+				for(CheckBox cb : checkBoxs) {
+					cb.setVisibility(View.VISIBLE);
+				}
 				
 				deleteTv.setText(R.string.delete);
 				deleteTv.setOnClickListener(onNativePhotoDeleteTvClickListener);
@@ -126,6 +150,7 @@ public class NativePhotoGridFragment extends BaseFragment {
 		}
 	}
 	
+	@SuppressLint("NewApi")
 	private void getImagePath() {
 		
 		mediaList = new ArrayList<MediaData>();
@@ -147,9 +172,10 @@ public class NativePhotoGridFragment extends BaseFragment {
 		}
 	}
 	
+	@SuppressLint("NewApi")
 	private void showRemotePhotoFragment() {
 		
-		FragmentManager fragManager = getActivity().getSupportFragmentManager();
+		FragmentManager fragManager = getActivity().getFragmentManager();
 		FragmentTransaction transcaction = fragManager.beginTransaction();
 		String tag = RemotePhotoGridFragment.class.getName();
 		RemotePhotoGridFragment remotePhotoFm = (RemotePhotoGridFragment)fragManager.findFragmentByTag(tag);

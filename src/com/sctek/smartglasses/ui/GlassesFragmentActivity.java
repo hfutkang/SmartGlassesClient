@@ -1,10 +1,6 @@
 package com.sctek.smartglasses.ui;
 
 import com.sctek.smartglasses.R;
-import com.sctek.smartglasses.R.id;
-import com.sctek.smartglasses.R.layout;
-import com.sctek.smartglasses.R.menu;
-
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
