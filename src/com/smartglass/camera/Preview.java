@@ -1,4 +1,4 @@
-package com.sctek.smartglasses_device.camera;
+package com.smartglass.camera;
 
 /**
  * @author Jose Davis Nidhin
@@ -9,6 +9,7 @@ import java.util.List;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Size;
@@ -49,21 +50,21 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback, View.OnTouchL
     		// get Camera parameters
     		Camera.Parameters params = mCamera.getParameters();
     		
-    		params.setRotation(180);
-    		List<String> focusModes = params.getSupportedFocusModes();
-    		if (focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
-    			// set the focus mode
-    			if(action == MainActivity.TAKE_PICTURE_ACTION)
-    				params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-    			// set Camera parameters
-    		}
-    		if(focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
-    			if(action == MainActivity.TAKE_VEDIO_ACTION)
-    				params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
-    		}
+//    		params.setRotation(180);
+//    		List<String> focusModes = params.getSupportedFocusModes();
+//    		if (focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
+//    			// set the focus mode
+//    			if(action == MainActivity.TAKE_PICTURE_ACTION)
+//    				params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+//    			// set Camera parameters
+//    		}
+//    		if(focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
+//    			if(action == MainActivity.TAKE_VEDIO_ACTION)
+//    				params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+//    		}
     		mCamera.setParameters(params);
     		
-    		mCamera.setDisplayOrientation(90);
+//    		mCamera.setDisplayOrientation(90);
     	}
     }
 
@@ -72,6 +73,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback, View.OnTouchL
         // We purposely disregard child measurements because act as a
         // wrapper to a SurfaceView that centers the camera preview instead
         // of stretching it.
+    	Log.e(TAG, "onMeasure");
         final int width = resolveSize(getSuggestedMinimumWidth(), widthMeasureSpec);
         final int height = resolveSize(getSuggestedMinimumHeight(), heightMeasureSpec);
         setMeasuredDimension(width, height);
@@ -114,7 +116,10 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback, View.OnTouchL
         // to draw.
         try {
             if (mCamera != null) {
+            	
                 mCamera.setPreviewDisplay(holder);
+                mCamera.startPreview();
+//                SurfaceTexture surface = new SurfaceTexture(10);
             }
         } catch (IOException exception) {
             Log.e(TAG, "IOException caused by setPreviewDisplay()", exception);
@@ -163,12 +168,21 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback, View.OnTouchL
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
+    	Log.e(TAG, "surfaceChanged");
     	if(mCamera != null) {
-    		Camera.Parameters parameters = mCamera.getParameters();
-    		parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
-    		requestLayout();
-
-    		mCamera.setParameters(parameters);
+    		mCamera.stopPreview();
+    		
+//    		Camera.Parameters parameters = mCamera.getParameters();
+//    		parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
+//    		requestLayout();
+//
+//    		mCamera.setParameters(parameters);
+    		try {
+				mCamera.setPreviewDisplay(mHolder);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
     		mCamera.startPreview();
     	}
     }

@@ -1,4 +1,4 @@
-package com.sctek.smartglasses_device.camera;
+package com.smartglass.camera;
 
 /**
  * @author Jose Davis Nidhin
@@ -11,8 +11,11 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.text.Format;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
-import com.sctek.smartglasses_device.R;
+import com.smartglass.device.R;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -86,7 +89,6 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 			if(numCams > 0){
 				try{
 					mCamera = Camera.open(0);
-					mCamera.startPreview();
 					preview.setCamera(mCamera, MainActivity.TAKE_PICTURE_ACTION);
 				} catch (RuntimeException ex){
 					ex.printStackTrace();
@@ -98,10 +100,11 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub
-					Log.e(TAG, "autoFocus");
-					mCamera.autoFocus(CameraActivity.this);
+					Log.e(TAG, "takePicture");
+//					mCamera.autoFocus(CameraActivity.this);
+					mCamera.takePicture(shutterCallback, rawCallback, jpegCallback);
 				}
-			}, 1000);
+			}, 2000);
 		}
 		
 		if(getIntent().getIntExtra("action", MainActivity.TAKE_PICTURE_ACTION) == 
@@ -157,6 +160,7 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 	@Override
 	protected void onDestroy() {
 		// TODO Auto-generated method stub
+		Log.e(TAG, "onDestroy");
 		releaseMediaRecorder();
 		releaseCamera();
 		super.onDestroy();
@@ -166,7 +170,10 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 	public void onBackPressed() {
 		// TODO Auto-generated method stub
 		Log.e(TAG, "onBackPressed");
-		mMediaRecorder.stop();
+		
+		if(mMediaRecorder != null)
+			mMediaRecorder.stop();
+		
 		if(vedioOutFile != null)
 			refreshGallery(vedioOutFile);
 		super.onBackPressed();
@@ -178,26 +185,26 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 	}
 
 	private void refreshGallery(File file) {
-		Intent mediaScanIntent = new Intent( Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-		mediaScanIntent.setData(Uri.fromFile(file));
-		sendBroadcast(mediaScanIntent);
+		MultiMediaScanner scanner = 
+				new MultiMediaScanner(this, new String[]{file.getAbsolutePath()}, null);
+		scanner.connect();
 	}
 
 	ShutterCallback shutterCallback = new ShutterCallback() {
 		public void onShutter() {
-			//			 Log.d(TAG, "onShutter'd");
+						 Log.e(TAG, "onShutter");
 		}
 	};
 
 	PictureCallback rawCallback = new PictureCallback() {
 		public void onPictureTaken(byte[] data, Camera camera) {
-			//			 Log.d(TAG, "onPictureTaken - raw");
+						 Log.e(TAG, "onPictureTaken raw");
 		}
 	};
 
 	PictureCallback jpegCallback = new PictureCallback() {
 		public void onPictureTaken(byte[] data, Camera camera) {
-			Log.e(TAG, "onPictureTaken - jpeg");
+			Log.e(TAG, "onPictureTaken");
 			new SaveImageTask().execute(data);
 //			finish();
 			
@@ -207,6 +214,13 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 	private class SaveImageTask extends AsyncTask<byte[], Void, Void> {
 
 		@Override
+		protected void onPostExecute(Void result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+			finish();
+		}
+		@SuppressLint({ "SimpleDateFormat", "DefaultLocale" })
+		@Override
 		protected Void doInBackground(byte[]... data) {
 			FileOutputStream outStream = null;
 
@@ -214,9 +228,15 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 			try {
 				File sdCard = Environment.getExternalStorageDirectory();
 				File dir = new File (sdCard.getAbsolutePath() + "/camtest");
-				dir.mkdirs();				
-
-				String fileName = String.format("%d.jpg", System.currentTimeMillis());
+				if(!dir.exists())
+					dir.mkdirs();		
+				
+				SimpleDateFormat format = new SimpleDateFormat("yyyymmdd_HHmmss");
+				long time = System.currentTimeMillis();
+				Date date = new Date(time);
+				String name = format.format(date);
+//				String name = "test";
+				String fileName = String.format("%s.jpg", name);
 				File outFile = new File(dir, fileName);
 
 				outStream = new FileOutputStream(outFile);
@@ -224,7 +244,7 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 				outStream.flush();
 				outStream.close();
 
-				Log.d(TAG, "onPictureTaken - wrote bytes: " + data.length + " to " + outFile.getAbsolutePath());
+				Log.e(TAG, "onPictureTaken - wrote bytes: " + data.length + " to " + outFile.getAbsolutePath());
 
 				refreshGallery(outFile);
 			} catch (FileNotFoundException e) {
@@ -267,7 +287,7 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 	    File dir = new File (sdCard.getAbsolutePath() + "/camtest");
 	    if(!dir.exists())
 			dir.mkdirs();				
-
+	    Log.e(TAG, "4444");
 	    String fileName = String.format("%d.mp4", System.currentTimeMillis());
 	    vedioOutFile = new File(dir, fileName);
 	    
@@ -296,7 +316,6 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 		if(numCams > 0){
 			try{
 				mCamera = Camera.open(0);
-				mCamera.startPreview();
 				preview.setCamera(mCamera, action);
 			} catch (Exception ex){
 				ex.printStackTrace();
@@ -333,6 +352,7 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 	@Override
 	public void onPreviewFrame(byte[] data, Camera camera) {
 		// TODO Auto-generated method stub
+		Log.e(TAG, "onPreviewFrame");
 		Parameters parameters = camera.getParameters();
 		Size size = parameters.getPreviewSize();
 		
@@ -348,7 +368,7 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 		    File dir = new File (sdCard.getAbsolutePath() + "/camtest");
 		    if(!dir.exists())
 				dir.mkdirs();				
-	
+		    Log.e(TAG, "12344");
 		    String fileName = String.format("%d.jpg", System.currentTimeMillis());
 		    File imageFile = new File(dir, fileName);
 		    if(!imageFile.exists())
