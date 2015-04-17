@@ -80,6 +80,7 @@ public class MySideNavigationCallback implements ISideNavigationCallback {
 			break;
 		case R.id.about_item:
 			break;
+			
 		default:
 			break;
 		}

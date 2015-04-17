@@ -4,9 +4,13 @@
     tools:context="com.sctek.smartglasses.SettingFragment" >
 
     <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_settings"
+        android:id="@+id/take_photo"
+        android:title="拍照"
+        app:showAsAction="never"/>
+    
+    <item
+        android:id="@+id/take_vedio"
+        android:title="摄像"
         app:showAsAction="never"/>
 
 </menu>

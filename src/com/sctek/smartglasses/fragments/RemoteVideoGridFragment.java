@@ -26,6 +26,8 @@ import com.sctek.smartglasses.R;
 
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
@@ -45,6 +47,7 @@ import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.CheckBox;
+import android.widget.RemoteViews;
 import android.widget.Toast;
 
 //= {"http://h.hiphotos.baidu.com/image/w%3D310/sign=6c58b6e7b1119313c743f9b155380c10/a6efce1b9d16fdfa904abecbb78f8c5494ee7bf4.jpg",
@@ -72,6 +75,8 @@ public class RemoteVideoGridFragment extends BaseFragment {
 	private static final String TAG = RemoteVideoGridFragment.class.getName();
 	
 	private GetRemoteMediaUrlTask mMediaUrlTask;
+	
+	private static final int VEDIO_NOTIFICATION_ID = 1;
 	
 	@SuppressLint("NewApi")
 	@Override
@@ -172,8 +177,10 @@ public class RemoteVideoGridFragment extends BaseFragment {
 				deleteView.setVisibility(View.VISIBLE);
 				deleteTv.setText(R.string.delete);
 				deleteTv.setOnClickListener(onRemotePhotoDeleteClickListener);
-				showImageCheckBox = true;
-				mImageAdapter.notifyDataSetChanged();
+				
+				for(CheckBox cb : checkBoxs) {
+					cb.setVisibility(View.VISIBLE);
+				}
 				return true;
 			default:
 				return true;
@@ -274,7 +281,7 @@ public class RemoteVideoGridFragment extends BaseFragment {
 		@Override
 		public void onClick(View v) {
 			// TODO Auto-generated method stub
-			new PhotoDeleteTask().execute();
+			new RemoteVedioDeleteTask().execute();
 			onCancelTvClicked();
 		}
 	};
@@ -301,6 +308,9 @@ private class VideoDownloadTask extends AsyncTask<String, Integer, Void> {
 		private int downloadcount;
 		private GlassImageDownloader imageDownloader;
 		
+		private NotificationManager notificationManager;
+		private Notification notification;
+		
 		@SuppressLint("NewApi")
 		public VideoDownloadTask() {
 			
@@ -310,15 +320,26 @@ private class VideoDownloadTask extends AsyncTask<String, Integer, Void> {
 			
 			imageDownloader = new GlassImageDownloader();
 			
+			notificationManager =  (NotificationManager)(getActivity().getSystemService(mContext.NOTIFICATION_SERVICE));
+			notification = new Notification();
+			
 		}
 		
 		@Override
 		protected void onPreExecute() {
 			// TODO Auto-generated method stub
 			super.onPreExecute();
-			String msg = String.format("downloading(%d/%d)...", downloadcount, totalcount);
+			String msg = String.format("视频同步中(%d/%d)...", downloadcount, totalcount);
+			
+			notification.contentView = new RemoteViews(mContext.getPackageName(), R.layout.notification_view);
+			notification.icon = R.drawable.ic_stub;
+			notification.contentView.setProgressBar(R.id.donwload_progress, 100, 100, true);
+			notification.contentView.setTextViewText(R.id.download_lable_tv, msg);
+			notificationManager.notify(VEDIO_NOTIFICATION_ID, notification);
+			
+			
 			progressDialog.setMessage(msg);
-			progressDialog.show();
+			progressDialog.show();;
 		}
 		
 		@Override
@@ -327,9 +348,15 @@ private class VideoDownloadTask extends AsyncTask<String, Integer, Void> {
 			super.onPostExecute(result);
 			progressDialog.dismiss();
 			
+			String msg = String.format("同步完成(%d/%d)...", downloadcount, totalcount);
+			notification.contentView.setTextViewText(R.id.download_lable_tv, msg);
+			notification.vibrate = new long[]{0,100,200,300}; 
+			notificationManager.notify(VEDIO_NOTIFICATION_ID, notification);
+			
 			if(downloadcount != 0) {
 				refreshGallery("vedios");
 			}
+			disCheckMedia();
 			selectedMedias.clear();
 		}
 		
@@ -337,7 +364,12 @@ private class VideoDownloadTask extends AsyncTask<String, Integer, Void> {
 		protected void onProgressUpdate(Integer... values) {
 			// TODO Auto-generated method stub
 			super.onProgressUpdate(values);
-			String msg = String.format("downloading(%d/%d)...", downloadcount, totalcount);
+			
+			String msg = String.format("视频同步中(%d/%d)...", downloadcount, totalcount);
+			
+			notification.contentView.setTextViewText(R.id.download_lable_tv, msg); 
+			notificationManager.notify(VEDIO_NOTIFICATION_ID, notification);
+			
 			progressDialog.setMessage(msg);
 		}
 
@@ -355,7 +387,7 @@ private class VideoDownloadTask extends AsyncTask<String, Integer, Void> {
 					if(!dir.exists())
 						dir.mkdirs();
 					
-					File file = new File(VIDEO_DOWNLOAD_FOLDER, "123456.mp4");
+					File file = new File(VIDEO_DOWNLOAD_FOLDER, data.name);
 					
 					if(file.exists()) {
 						downloadcount++;
@@ -386,12 +418,12 @@ private class VideoDownloadTask extends AsyncTask<String, Integer, Void> {
 
 	protected static final String ALLOWED_URI_CHARS = "@#&=*+-_.,:!?()/~'%";
 
-	private class PhotoDeleteTask extends AsyncTask<Void, Boolean, Void> {
+	private class RemoteVedioDeleteTask extends AsyncTask<Void, Boolean, Void> {
 		
 		private ProgressDialog mProgressDialog;
 		
 		@SuppressLint("NewApi")
-		public PhotoDeleteTask () {
+		public RemoteVedioDeleteTask () {
 			mProgressDialog = new ProgressDialog(getActivity());
 		}
 		@Override
@@ -417,14 +449,7 @@ private class VideoDownloadTask extends AsyncTask<String, Integer, Void> {
 				Toast.makeText(mContext, "connection error", Toast.LENGTH_LONG).show();
 			else
 			{
-				for(MediaData md : selectedMedias) {
-					int i = mediaList.indexOf(md);
-					if(i != -1)
-						mediaList.remove(i);
-				}
-//				mediaList.removeAll(selectedMedias);
-				selectedMedias.clear();
-				mImageAdapter.notifyDataSetChanged();
+				onMediaDeleted();
 			}
 		}
 		@Override

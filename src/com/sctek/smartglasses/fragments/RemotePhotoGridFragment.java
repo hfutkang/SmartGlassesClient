@@ -45,6 +45,8 @@ import com.sctek.smartglasses.utils.XmlContentHandler;
 import android.R.anim;
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
@@ -53,6 +55,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources.NotFoundException;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -89,6 +92,7 @@ import android.widget.CheckBox;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.RemoteViews;
 import android.widget.Toast;
 
 //= {"http://h.hiphotos.baidu.com/image/w%3D310/sign=6c58b6e7b1119313c743f9b155380c10/a6efce1b9d16fdfa904abecbb78f8c5494ee7bf4.jpg",
@@ -116,6 +120,8 @@ public class RemotePhotoGridFragment extends BaseFragment {
 	private static final String TAG = RemotePhotoGridFragment.class.getName();
 	private static final String REMOTE_PHOTO_URL = "http://192.168.5.122:7766/sdcard/DCIM/Camera/";
 	private GetRemoteMediaUrlTask mMediaUrlTask;
+	
+	private static final int PHOTO_NOTIFICATION_ID = 0;
 	
 	@SuppressLint("NewApi")
 	@Override
@@ -206,6 +212,7 @@ public class RemotePhotoGridFragment extends BaseFragment {
 		switch (item.getItemId()) {
 			case R.id.download_item:
 				deleteView.setVisibility(View.VISIBLE);
+				selectAllView.setVisibility(View.VISIBLE);
 				
 				for(CheckBox cb : checkBoxs) {
 					cb.setVisibility(View.VISIBLE);
@@ -213,17 +220,22 @@ public class RemotePhotoGridFragment extends BaseFragment {
 				
 				deleteTv.setText(R.string.download);
 				deleteTv.setOnClickListener(onPhotoDownloadClickListener);
-				return true;
+				break;
 			case R.id.remote_photo_delete_item:
+				
 				deleteView.setVisibility(View.VISIBLE);
+				selectAllView.setVisibility(View.VISIBLE);
+				
+				for(CheckBox cb : checkBoxs) {
+					cb.setVisibility(View.VISIBLE);
+				}	
 				deleteTv.setText(R.string.delete);
 				deleteTv.setOnClickListener(onRemotePhotoDeleteClickListener);
-				showImageCheckBox = true;
-				mImageAdapter.notifyDataSetChanged();
-				return true;
+				break;
 			default:
-				return true;
+				return false;
 		}
+		return true;
 	}
 	
 //	private void getImagePath(final String ip) {
@@ -334,6 +346,9 @@ public class RemotePhotoGridFragment extends BaseFragment {
 		private int downloadcount;
 		private GlassImageDownloader imageDownloader;
 		
+		private NotificationManager notificationManager;
+		private Notification notification;
+		
 		@SuppressLint("NewApi")
 		public PhotoDownloadTask() {
 			
@@ -343,12 +358,21 @@ public class RemotePhotoGridFragment extends BaseFragment {
 			
 			imageDownloader = new GlassImageDownloader();
 			
+			notificationManager =  (NotificationManager)(getActivity().getSystemService(mContext.NOTIFICATION_SERVICE));
+			notification = new Notification();
+			
 		}
 		
 		@Override
 		protected void onPreExecute() {
 			// TODO Auto-generated method stub
 			super.onPreExecute();
+			
+			notification.contentView = new RemoteViews(mContext.getPackageName(), R.layout.notification_view);
+			notification.icon = R.drawable.ic_stub;
+			notification.contentView.setProgressBar(R.id.donwload_progress, 100, 100, true);
+			notificationManager.notify(PHOTO_NOTIFICATION_ID, notification);
+			
 			String msg = String.format("downloading(%d/%d)...", downloadcount, totalcount);
 			progressDialog.setMessage(msg);
 			progressDialog.show();
@@ -358,11 +382,19 @@ public class RemotePhotoGridFragment extends BaseFragment {
 		protected void onPostExecute(Void result) {
 			// TODO Auto-generated method stub
 			super.onPostExecute(result);
+			Log.e(TAG, "onProstExecute");
 			progressDialog.dismiss();
+			
+			String msg = String.format("同步完成(%d/%d)...", downloadcount, totalcount);
+			notification.contentView.setTextViewText(R.id.download_lable_tv, msg);
+			notification.vibrate = new long[]{0,100,200,300}; 
+			notificationManager.notify(PHOTO_NOTIFICATION_ID, notification);
 			
 			if(downloadcount != 0) {
 				refreshGallery("photos");
 			}
+			
+			disCheckMedia();
 			selectedMedias.clear();
 		}
 		
@@ -370,18 +402,26 @@ public class RemotePhotoGridFragment extends BaseFragment {
 		protected void onProgressUpdate(Integer... values) {
 			// TODO Auto-generated method stub
 			super.onProgressUpdate(values);
-			String msg = String.format("downloading(%d/%d)...", downloadcount, totalcount);
+			Log.e(TAG, "onProgressUpdate");
+			try{
+			String msg = String.format("图片同步中(%d/%d)...", downloadcount, totalcount);
 			progressDialog.setMessage(msg);
+			notification.contentView.setTextViewText(R.id.download_lable_tv, msg);
+			notificationManager.notify(PHOTO_NOTIFICATION_ID, notification);
+			} catch(Exception e) {
+				e.printStackTrace();
+			}
 		}
 
 		@Override
 		protected Void doInBackground(String... params) {
 			// TODO Auto-generated method stub
 			Log.e(TAG, "PhotoDownloadTask");
-			for(MediaData data : selectedMedias) {
+			try {
+			for(int i = 0; i < selectedMedias.size(); i++) {
 				
-				try {
-					
+				MediaData data = selectedMedias.get(i);
+				
 					InputStream in = imageDownloader.getInputStream(data.url);
 					
 					File dir = new File(PHOTO_DOWNLOAD_FOLDER);
@@ -409,14 +449,13 @@ public class RemotePhotoGridFragment extends BaseFragment {
 					
 					os.close();
 					in.close();
-					
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				
+			}
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 			return null;
 		}
-		
 	}
 	
 	private class PhotoDeleteTask extends AsyncTask<Void, Boolean, Void> {
@@ -451,13 +490,7 @@ public class RemotePhotoGridFragment extends BaseFragment {
 			else
 			{
 //				mediaList.removeAll(selectedMedias);
-				for(MediaData md : selectedMedias) {
-					int i = mediaList.indexOf(md);
-					if(i != -1)
-						mediaList.remove(i);
-				}
-				selectedMedias.clear();
-				mImageAdapter.notifyDataSetChanged();
+				onMediaDeleted();
 			}
 		}
 		@Override
@@ -471,6 +504,7 @@ public class RemotePhotoGridFragment extends BaseFragment {
 			for(MediaData data : selectedMedias) {
 				urlBuffer.append("&" + data.name);
 			}
+			
 			Log.e(TAG, "delete url" + urlBuffer.toString());
 			HttpClient httpClient = CustomHttpClient.getHttpClient();
 			HttpGet httpGet = new HttpGet(urlBuffer.toString());

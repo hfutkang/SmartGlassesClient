@@ -24,6 +24,11 @@ import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
 import com.sctek.smartglasses.R;
+import com.ingenic.glass.api.sync.SyncChannel;
+import com.ingenic.glass.api.sync.SyncChannel.CONNECTION_STATE;
+import com.ingenic.glass.api.sync.SyncChannel.Packet;
+import com.ingenic.glass.api.sync.SyncChannel.RESULT;
+import com.ingenic.glass.api.sync.SyncChannel.onChannelListener;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
@@ -73,6 +78,7 @@ import android.os.Handler;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -151,6 +157,7 @@ public class BaseFragment extends Fragment {
 	private SideNavigationView mSideNavigationView;
 	
 	public View deleteView;
+	public View selectAllView;
 	
 	public boolean showImageCheckBox;
 	
@@ -160,11 +167,12 @@ public class BaseFragment extends Fragment {
 	public TextView cancelTv;
 	protected View enableApView;
 	protected Button enableApBt;
+	protected CheckBox selectAllRb;
 	
 	private int childIndex;
 	
 	public WifiManager mWifiManager;
-//	public SyncChannel mChannel;
+	public SyncChannel mChannel;
 	
 	public Context mContext;
 	public int preApState;
@@ -196,7 +204,7 @@ public class BaseFragment extends Fragment {
 		checkBoxs = new ArrayList<CheckBox>();
 		
 		mWifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
-//		mChannel = SyncChannel.create("00e04c68229b0", mContext, mOnSyncListener);
+		mChannel = SyncChannel.create("00e04c68229b0", mContext, mOnSyncListener);
 		
 	}
 	
@@ -207,11 +215,13 @@ public class BaseFragment extends Fragment {
 		Log.e(TAG, "onCreateView");
 		View view = inflater.inflate(R.layout.fragment_image_grid, container, false);
 		
+		selectAllView = view.findViewById(R.id.select_all_lo);
 		deleteView = view.findViewById(R.id.delete_bt_lo);
 		deleteTv = (TextView) view .findViewById(R.id.delete_tv);
 		cancelTv = (TextView) view.findViewById(R.id.cancel_tv);
 		enableApView = view.findViewById(R.id.wifi_ap_hint_lo);
 		enableApBt = (Button)view.findViewById(R.id.wifi_ap_on_bt);
+		selectAllRb = (CheckBox)view.findViewById(R.id.select_all_cb);
 		
 		cancelTv.setOnClickListener(new OnClickListener() {
 			
@@ -219,6 +229,29 @@ public class BaseFragment extends Fragment {
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
 				onCancelTvClicked();
+				disCheckMedia();
+				selectedMedias.clear();
+			}
+		});
+		
+		selectAllRb.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				// TODO Auto-generated method stub
+				if(isChecked) {
+					for(MediaData md : mediaList) {
+						selectedMedias.add(md);
+					}
+					for(CheckBox cb : checkBoxs) {
+						cb.setChecked(true);
+					}
+				}
+				else {
+					for(CheckBox cb : checkBoxs)
+						cb.setChecked(false);
+					selectedMedias.clear();
+				}
 			}
 		});
 		
@@ -345,10 +378,12 @@ public class BaseFragment extends Fragment {
 			final int mPositoin = position;
 			View view = convertView;
 			if (view == null) {
-				
+				Log.e(TAG, "null");
 				view = inflater.inflate(R.layout.image_grid_item, parent, false);
+				view.setLayoutParams(new GridView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+						ViewGroup.LayoutParams.MATCH_PARENT));
 				holder = new ViewHolder();
-				assert view != null;
+				
 				holder.imageView = (ImageView) view.findViewById(R.id.image);
 				holder.progressBar = (ProgressBar) view.findViewById(R.id.progress);
 				holder.imageName = (TextView)view.findViewById(R.id.image_name_tv);
@@ -367,11 +402,14 @@ public class BaseFragment extends Fragment {
 				@Override
 				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 					// TODO Auto-generated method stub
+					Log.e(TAG, "onCheckedChanged");
 					if(isChecked) {
-						selectedMedias.add(mediaList.get(imageIndex));
+						if(!selectedMedias.contains(mediaList.get(imageIndex)))
+								selectedMedias.add(mediaList.get(imageIndex));
 					}
-					else
+					else {
 						selectedMedias.remove(mediaList.get(imageIndex));
+					}
 				}
 			});
 			
@@ -548,14 +586,22 @@ public class BaseFragment extends Fragment {
 	}
 	
 	public void onCancelTvClicked() {
-//		showImageCheckBox = false;
-		deleteView.setVisibility(View.GONE);
-//		mImageAdapter.notifyDataSetChanged();
+		
 		for(CheckBox cb : checkBoxs) {
 			cb.setVisibility(View.GONE);
 		}
-		
-		selectedMedias.clear();
+		deleteView.setVisibility(View.GONE);
+		selectAllView.setVisibility(View.GONE);
+	}
+	
+	public void disCheckMedia() {
+		for(CheckBox cb : checkBoxs) {
+			try {
+			cb.setChecked(false);
+			} catch( Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	public void onNativePhotoDeleteTvClicked(String type) {
@@ -563,24 +609,8 @@ public class BaseFragment extends Fragment {
 //		ContentResolver cr = mContext.getContentResolver();
 		String imagesPath[] = getMediaPath(type);
 		
-//		Uri uri = null;
-//		if(childIndex == NativePhotoGridFragment.FRAGMENT_INDEX)
-//			uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-//		else if(childIndex == NativeVideoGridFragment.FRAGMENT_INDEX)
-//			uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-//		
-//		for(int i = 0; i < imagesPath.length; i++) {
-//			
-//			File file = new File(imagesPath[i]);
-//			if(file.exists())
-//				file.delete();
-//			Log.e(TAG, imagesPath[i]);
-//			try{
-//				cr.delete(uri, MediaStore.MediaColumns.DATA + "=?", new String[]{imagesPath[i]});
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//			}
-//		}
+		if(imagesPath.length == 0)
+			return;
 		
 		for(String path : imagesPath) {
 			File file = new File(path);
@@ -591,17 +621,28 @@ public class BaseFragment extends Fragment {
 		MultiMediaScanner scanner = new MultiMediaScanner(mContext, imagesPath, null);
 		scanner.connect();
 		
-		for(MediaData md : selectedMedias) {
+//		mediaList.removeAll(selectedMedias);
+		
+		onMediaDeleted();
+		
+	}
+	
+	public void onMediaDeleted() {
+		
+		ArrayList<MediaData> tmp = new ArrayList<MediaData>(selectedMedias);
+		
+		disCheckMedia();
+		selectedMedias.clear();
+		
+		for(MediaData md : tmp) {
 			int i = mediaList.indexOf(md);
 			if(i != -1)
 				mediaList.remove(i);
 		}
-//		mediaList.removeAll(selectedMedias);
-		selectedMedias.clear();
-		mImageAdapter.notifyDataSetChanged();
 		
+		tmp.clear();
+		mImageAdapter.notifyDataSetChanged();
 	}
-	
 	public void onRemotePhotoDeleteTvClicked() {
 		
 		DownloadManager mDownloadManager = (DownloadManager)mContext
@@ -614,9 +655,13 @@ public class BaseFragment extends Fragment {
 		String paths[] = new String[selectedMedias.size()];
 		String dirPath = Environment.getExternalStorageDirectory().toString()
 				+ "/SmartGlasses/" + type + "/";
-		int i = 0;
-		for(MediaData md : selectedMedias)
-			paths[i++] = dirPath + md.name;
+		
+		for(int i = 0; i < selectedMedias.size(); i++) {
+			
+			MediaData data = selectedMedias.get(i);
+			paths[i] = dirPath + data.name;
+			
+		}
 		return paths;
 	}
 	
@@ -645,6 +690,7 @@ public class BaseFragment extends Fragment {
 			super.onPreExecute();
 			mProgressDialog.setMessage("waiting for device connect...");
 			mProgressDialog.show();
+			
 		}
 		
 		@Override
@@ -661,7 +707,7 @@ public class BaseFragment extends Fragment {
 				if(isCancelled())
 					return null;
 				try {
-					Thread.sleep(3000);
+					Thread.sleep(5000);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -688,29 +734,29 @@ public class BaseFragment extends Fragment {
 		
 	}
     
-//	private MyOnSyncListener mOnSyncListener = new MyOnSyncListener();
-//	private class MyOnSyncListener implements SyncChannel.onChannelListener {
-//	
-//		@Override
-//		public void onReceive(RESULT arg0, Packet arg1) {
-//			// TODO Auto-generated method stub
-//			Log.e(TAG, "Channel onReceive");
-//		}
-//	
-//		@Override
-//		public void onSendCompleted(RESULT arg0, Packet arg1) {
-//			// TODO Auto-generated method stub
-//			
-//			Log.e(TAG, "onSendCompleted");
-//		}
-//	
-//		@Override
-//		public void onStateChanged(CONNECTION_STATE arg0) {
-//			// TODO Auto-generated method stub
-//			Log.e(TAG, "onStateChanged:" + arg0.toString());
-//		}
-//		
-//	}
+	private MyOnSyncListener mOnSyncListener = new MyOnSyncListener();
+	private class MyOnSyncListener implements SyncChannel.onChannelListener {
+	
+		@Override
+		public void onReceive(RESULT arg0, Packet arg1) {
+			// TODO Auto-generated method stub
+			Log.e(TAG, "Channel onReceive");
+		}
+	
+		@Override
+		public void onSendCompleted(RESULT arg0, Packet arg1) {
+			// TODO Auto-generated method stub
+			
+			Log.e(TAG, "onSendCompleted");
+		}
+	
+		@Override
+		public void onStateChanged(CONNECTION_STATE arg0) {
+			// TODO Auto-generated method stub
+			Log.e(TAG, "onStateChanged:" + arg0.toString());
+		}
+		
+	}
 	
 	public String getConnectedGlassIP() { 
 		
@@ -730,6 +776,17 @@ public class BaseFragment extends Fragment {
 		} catch (Exception e) { 
 			e.printStackTrace();  
 		}  
+		
+//		if(ip == null) {
+//			Packet packet = mChannel.createPacket();
+//			packet.putInt("type", 1);
+//			
+//			String ssid = ((TelephonyManager)mContext
+//					.getSystemService(mContext.TELEPHONY_SERVICE)).getDeviceId();
+//			packet.putString("ssid", ssid);
+//			
+//			mChannel.sendPacket(packet);
+//		}
 		return ip;
 	} 
 	

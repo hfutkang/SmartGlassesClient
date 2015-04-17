@@ -23,6 +23,11 @@ import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceFragment;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.CheckBox;
 import android.widget.Toast;
 
 import com.sctek.smartglasses.GlassesAplication;
@@ -79,6 +84,33 @@ public class SettingFragment extends PreferenceFragment implements Preference.On
 		initPrefereceView();
 		
 	}
+	
+//	@Override
+//	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+//		// TODO Auto-generated method stub
+//		inflater.inflate(R.menu.setting, menu);
+//	}
+//	
+//	@Override
+//	public boolean onOptionsItemSelected(MenuItem item) {
+//		Log.e(TAG, "onOptionsItemSelected");
+//		
+//		Packet pk = mChannel.createPacket();
+//		
+//		switch (item.getItemId()) {
+//			case R.id.take_photo:
+//				pk.putInt("type", 8);
+//				mChannel.sendPacket(pk);
+//				return true;
+//			case R.id.take_vedio:
+//				pk = mChannel.createPacket();
+//				pk.putInt("type", 9);
+//				mChannel.sendPacket(pk);
+//				return true;
+//			default:
+//				return super.onOptionsItemSelected(item);
+//		}
+//	}
 	
 	private void initPrefereceView() {
 		mPhotoPixelPreference = (ListPreference)findPreference("photo_pixel");

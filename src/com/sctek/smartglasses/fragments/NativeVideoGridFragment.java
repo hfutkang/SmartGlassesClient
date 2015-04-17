@@ -86,8 +86,6 @@ public class NativeVideoGridFragment extends BaseFragment {
 		onCreate = true;
 		getVideoPath();
 		
-		
-		
 		super.onCreate(savedInstanceState);
 		
 	}
@@ -167,6 +165,7 @@ public class NativeVideoGridFragment extends BaseFragment {
 				return true;
 			case R.id.native_video_delete_item:
 				deleteView.setVisibility(View.VISIBLE);
+				selectAllView.setVisibility(View.VISIBLE);
 				
 				for(CheckBox cb : checkBoxs) {
 					cb.setVisibility(View.VISIBLE);

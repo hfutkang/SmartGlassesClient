@@ -3,11 +3,38 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" 
     android:background="@color/black">
+    <LinearLayout 
+        android:id="@+id/select_all_lo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentTop="true"
+        android:background="@color/white"
+        android:visibility="gone">
+        
+        <CheckBox 
+	        android:id="@+id/select_all_cb"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:background="@drawable/radiobutton_background"
+	        android:layout_gravity="center_vertical"
+	        android:layout_marginTop="5dp"
+	        android:layout_marginBottom="5dp"
+	        android:layout_marginLeft="10dp"/>
+        <TextView 
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="全选"/>
+        
+    </LinearLayout>
+    
     
 	<GridView 
 		android:id="@+id/grid"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
+		android:layout_below="@+id/select_all_lo"
 		android:gravity="center"
 		android:horizontalSpacing="4dip"
 		android:numColumns="3"

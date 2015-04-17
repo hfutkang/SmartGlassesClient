@@ -56,6 +56,7 @@ public class GetRemoteVideoThumbWorks {
 	public static synchronized GetRemoteVideoThumbWorks getInstance() {
 		if(instance == null)
 			instance = new GetRemoteVideoThumbWorks();
+		
 		return instance;
 	}
 	
@@ -72,6 +73,9 @@ public class GetRemoteVideoThumbWorks {
 	}
 	
 	public void getRemoteVideoThumb(final String url, final GetRemoteVideoThumbListener listener) {
+		
+		if(mExecutorService.isShutdown())
+			mExecutorService = Executors.newFixedThreadPool(5);
 		
 		mExecutorService.submit(new Runnable() {
 			

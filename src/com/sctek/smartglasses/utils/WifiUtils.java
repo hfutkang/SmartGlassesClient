@@ -28,7 +28,7 @@ public class WifiUtils {
 		String ssid = ((TelephonyManager)mContext
 				.getSystemService(mContext.TELEPHONY_SERVICE)).getDeviceId();
 		WifiConfiguration wcfg = new WifiConfiguration();
-		wcfg.SSID = new String("glass_ap");
+		wcfg.SSID = new String(ssid);
 		wcfg.networkId = 1;
 		wcfg.allowedAuthAlgorithms.clear();
 		wcfg.allowedGroupCiphers.clear();
