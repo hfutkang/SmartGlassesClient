@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.smartglass.camera.MainActivity" >
+    tools:context="com.smartglass.device.MainActivity" >
 
     <Button
         android:id="@+id/take_picture_bt"
@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="100dp"
-        android:text="拍照" 
+        android:text="@string/take_photo" 
         android:onClick="onTakePictureButtonClicked"/>
     
     <Button 
@@ -20,7 +20,7 @@
         android:layout_centerHorizontal="true"
         android:layout_below="@id/take_picture_bt"
         android:layout_marginTop="10dp"
-        android:text="录像" 
+        android:text="@string/take_vedio" 
         android:onClick="onTakeVedioButtonClicked"/>
     
 </RelativeLayout>

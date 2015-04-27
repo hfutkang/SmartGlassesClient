@@ -21,14 +21,18 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
 
     <application
         android:allowBackup="true"
+        android:name=".GlassApplication"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.smartglass.camera.MainActivity"
+            android:name="com.smartglass.device.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,9 +42,11 @@
         </activity>
         
         <activity 
-            android:name="com.smartglass.camera.CameraActivity"
+            android:name="com.smartglass.device.CameraActivity"
             android:label="@string/app_name">
         </activity>
+        
+        <service android:name="com.smartglass.device.GlassesService"></service>
         
     </application>
 

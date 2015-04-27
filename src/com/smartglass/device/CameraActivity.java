@@ -1,4 +1,4 @@
-package com.smartglass.camera;
+package com.smartglass.device;
 
 /**
  * @author Jose Davis Nidhin
@@ -15,12 +15,15 @@ import java.text.Format;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import javax.xml.datatype.Duration;
+
 import com.smartglass.device.R;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
@@ -34,12 +37,16 @@ import android.hardware.Camera.ShutterCallback;
 import android.hardware.Camera.Size;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
+import android.media.MediaRecorder.OnErrorListener;
+import android.media.MediaRecorder.OnInfoListener;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
@@ -54,7 +61,10 @@ import android.widget.FrameLayout;
 import android.widget.Toast;
 
 public class CameraActivity extends Activity implements Camera.AutoFocusCallback, PreviewCallback{
+	
 	private static final String TAG = "CamTestActivity";
+	private static final String GLASSED_DATA_PATH = "/data/apache/GlassData/";
+//	private static final String GLASSED_DATA_PATH = "/sdcard/cameratest/";
 	private Preview preview;
 	private Button buttonClick;
 	private Camera mCamera;
@@ -63,7 +73,9 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 	private MediaRecorder mMediaRecorder;
 	private SurfaceView mSurfaceView;
 	private File vedioOutFile;
-
+	
+	private int vedioDuration = 0;
+	
 	@SuppressLint("NewApi")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -81,11 +93,12 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 		preview.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 		((FrameLayout) findViewById(R.id.layout)).addView(preview);
 		preview.setKeepScreenOn(true);
-
+			
 		if(getIntent().getIntExtra("action", MainActivity.TAKE_PICTURE_ACTION) == 
 				MainActivity.TAKE_PICTURE_ACTION) {
 			
 			int numCams = Camera.getNumberOfCameras();
+			Log.e(TAG, "cam num:" + numCams);
 			if(numCams > 0){
 				try{
 					mCamera = Camera.open(0);
@@ -102,22 +115,34 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 					// TODO Auto-generated method stub
 					Log.e(TAG, "takePicture");
 //					mCamera.autoFocus(CameraActivity.this);
-					mCamera.takePicture(shutterCallback, rawCallback, jpegCallback);
+					try {
+						mCamera.takePicture(shutterCallback, rawCallback, jpegCallback);
+					} catch (Exception e) {
+						e.printStackTrace();
+						finish();
+					}
 				}
 			}, 2000);
 		}
 		
 		if(getIntent().getIntExtra("action", MainActivity.TAKE_PICTURE_ACTION) == 
 				MainActivity.TAKE_VEDIO_ACTION) {
+			
+			vedioDuration = PreferenceManager.getDefaultSharedPreferences(this).getInt("duration", 10);
 			new Handler().postDelayed(new Runnable() {
 				
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub
-					prepareVideoRecorder();
-					mMediaRecorder.start();
+					try {
+						if(prepareVideoRecorder())
+							mMediaRecorder.start();
+					} catch (Exception e) {
+						e.printStackTrace();
+						finish();
+					}
 				}
-			}, 1000);
+			}, 2000);
 			
 		}
 
@@ -174,20 +199,44 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 		if(mMediaRecorder != null)
 			mMediaRecorder.stop();
 		
-		if(vedioOutFile != null)
-			refreshGallery(vedioOutFile);
 		super.onBackPressed();
 	}
 
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		// TODO Auto-generated method stub
+		Log.e(TAG, "onKeyDown");
+		return true;
+	}
+	@Override
+	public boolean onKeyUp(int keyCode, KeyEvent event) {
+		// TODO Auto-generated method stub
+		Log.e(TAG, "onKeyUp");
+		return true;
+	}
+//	@Override
+//	public boolean onKeyUp(int keyCode, KeyEvent event) {
+//		// TODO Auto-generated method stub
+//		Log.e(TAG, "onKeyUp");
+//		if(mMediaRecorder != null)
+//			mMediaRecorder.stop();
+//		mMediaRecorder = null;
+//		
+//		if(vedioOutFile != null)
+//			refreshGallery(vedioOutFile);
+//		return super.onKeyUp(keyCode, event);
+//		
+//	}
+	
 	private void resetCam() {
 		mCamera.startPreview();
 		preview.setCamera(mCamera, MainActivity.TAKE_PICTURE_ACTION);
 	}
 
 	private void refreshGallery(File file) {
-		MultiMediaScanner scanner = 
-				new MultiMediaScanner(this, new String[]{file.getAbsolutePath()}, null);
-		scanner.connect();
+//		MultiMediaScanner scanner = 
+//				new MultiMediaScanner(this, new String[]{file.getAbsolutePath()}, null);
+//		scanner.connect();
 	}
 
 	ShutterCallback shutterCallback = new ShutterCallback() {
@@ -223,11 +272,10 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 		@Override
 		protected Void doInBackground(byte[]... data) {
 			FileOutputStream outStream = null;
-
+			
 			// Write to SD Card
 			try {
-				File sdCard = Environment.getExternalStorageDirectory();
-				File dir = new File (sdCard.getAbsolutePath() + "/camtest");
+				File dir = new File(GLASSED_DATA_PATH + "photos");
 				if(!dir.exists())
 					dir.mkdirs();		
 				
@@ -235,18 +283,23 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 				long time = System.currentTimeMillis();
 				Date date = new Date(time);
 				String name = format.format(date);
-//				String name = "test";
+				
 				String fileName = String.format("%s.jpg", name);
 				File outFile = new File(dir, fileName);
-
+				Log.e(TAG, outFile.getAbsolutePath());
+				if(!outFile.exists()) {
+					outFile.createNewFile();
+					Runtime.getRuntime().exec("chmod 777 " + outFile.getAbsolutePath());
+				}
+				
 				outStream = new FileOutputStream(outFile);
 				outStream.write(data[0]);
 				outStream.flush();
 				outStream.close();
 
-				Log.e(TAG, "onPictureTaken - wrote bytes: " + data.length + " to " + outFile.getAbsolutePath());
+				Log.e(TAG, "onPictureTaken - wrote bytes: " + data[0].length + " to " + outFile.getAbsolutePath());
 
-				refreshGallery(outFile);
+//				refreshGallery(outFile);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -267,48 +320,102 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 	
 	private boolean prepareVideoRecorder(){
 
-		getCameraInstance(MainActivity.TAKE_VEDIO_ACTION);
-	    
-	    mMediaRecorder = new MediaRecorder();
-
-	    // Step 1: Unlock and set camera to MediaRecorder
-	    mCamera.unlock();
+		if(mCamera == null) {
+			getCameraInstance(MainActivity.TAKE_VEDIO_ACTION);
+			mMediaRecorder = new MediaRecorder();
+		    // Step 1: Unlock and set camera to MediaRecorder
+		}
+		
+		mCamera.unlock();
 	    mMediaRecorder.setCamera(mCamera);
 
 	    // Step 2: Set sources
-	    mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+	    mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
 	    mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
 	    // Step 3: Set a CamcorderProfile (requires API Level 8 or higher)
 	    mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
 
 	    // Step 4: Set output file
-	    File sdCard = Environment.getExternalStorageDirectory();
-	    File dir = new File (sdCard.getAbsolutePath() + "/camtest");
+	    File dir = new File (GLASSED_DATA_PATH + "vedios");
 	    if(!dir.exists())
-			dir.mkdirs();				
+			dir.mkdirs();			
+	    
 	    Log.e(TAG, "4444");
-	    String fileName = String.format("%d.mp4", System.currentTimeMillis());
-	    vedioOutFile = new File(dir, fileName);
+	    
+		SimpleDateFormat format = new SimpleDateFormat("yyyymmdd_HHmmss");
+		long time = System.currentTimeMillis();
+		Date date = new Date(time);
+		String fileName = format.format(date);
+		
+	    vedioOutFile = new File(dir, fileName + ".mp4");
+	    if(!vedioOutFile.exists()) {
+	    	try {
+				vedioOutFile.createNewFile();
+				Runtime.getRuntime().exec("chmod 777 " + vedioOutFile.getAbsolutePath());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	    }
 	    
 	    mMediaRecorder.setOutputFile(vedioOutFile.getAbsolutePath());
 	    // Step 5: Set the preview output
 	    mMediaRecorder.setPreviewDisplay(mSurfaceView.getHolder().getSurface());
+	    
+	    mMediaRecorder.setMaxDuration(vedioDuration*1000*10);
+	    
+	    mMediaRecorder.setOnInfoListener(myOnInfoListener);
+	    
+	    mMediaRecorder.setOnErrorListener(myOnErrorListener);
 
 	    // Step 6: Prepare configured MediaRecorder
 	    try {
 	        mMediaRecorder.prepare();
 	    } catch (IllegalStateException e) {
-	        Log.d(TAG, "IllegalStateException preparing MediaRecorder: " + e.getMessage());
+	        Log.e(TAG, "IllegalStateException preparing MediaRecorder: " + e.getMessage());
 	        releaseMediaRecorder();
 	        return false;
 	    } catch (IOException e) {
-	        Log.d(TAG, "IOException preparing MediaRecorder: " + e.getMessage());
+	        Log.e(TAG, "IOException preparing MediaRecorder: " + e.getMessage());
 	        releaseMediaRecorder();
 	        return false;
 	    }
 	    return true;
 	}
+	
+	private OnErrorListener myOnErrorListener = new OnErrorListener() {
+		
+		@Override
+		public void onError(MediaRecorder mr, int what, int extra) {
+			// TODO Auto-generated method stub
+			Log.e(TAG, "erro:" + what);
+			finish();
+		}
+	};
+	
+	private OnInfoListener myOnInfoListener = new OnInfoListener() {
+
+		@Override
+		public void onInfo(MediaRecorder mr, int what, int extra) {
+			// TODO Auto-generated method stub
+			Log.e(TAG, "info:" + what);
+			if(what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED) {
+				try {
+					
+					mMediaRecorder.stop();
+					mMediaRecorder.reset();
+					finish();
+//					if(prepareVideoRecorder())
+//						mMediaRecorder.start();
+					
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+	};
 	
 	@SuppressLint("NewApi")
 	private void getCameraInstance(int action) {
@@ -371,8 +478,10 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 		    Log.e(TAG, "12344");
 		    String fileName = String.format("%d.jpg", System.currentTimeMillis());
 		    File imageFile = new File(dir, fileName);
-		    if(!imageFile.exists())
+		    if(!imageFile.exists()) {
 				imageFile.createNewFile();
+				Runtime.getRuntime().exec("chmod 777 " + imageFile.getAbsolutePath());
+		    }
 		    
 		    fileOut = new FileOutputStream(imageFile);
 		    
@@ -388,6 +497,7 @@ public class CameraActivity extends Activity implements Camera.AutoFocusCallback
 			e.printStackTrace();
 		}
 	}
+	
 }
 
 

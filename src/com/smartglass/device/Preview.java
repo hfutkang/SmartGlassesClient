@@ -1,4 +1,4 @@
-package com.smartglass.camera;
+package com.smartglass.device;
 
 /**
  * @author Jose Davis Nidhin
@@ -9,10 +9,12 @@ import java.util.List;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Size;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -28,10 +30,12 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback, View.OnTouchL
     Size mPreviewSize;
     List<Size> mSupportedPreviewSizes;
     Camera mCamera;
+    Context mContext;
 
     Preview(Context context, SurfaceView sv) {
         super(context);
 
+        mContext = context;
         mSurfaceView = sv;
 //        addView(mSurfaceView);
        
@@ -49,6 +53,8 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback, View.OnTouchL
 
     		// get Camera parameters
     		Camera.Parameters params = mCamera.getParameters();
+    		
+    		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
     		
 //    		params.setRotation(180);
 //    		List<String> focusModes = params.getSupportedFocusModes();
@@ -114,6 +120,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback, View.OnTouchL
     public void surfaceCreated(SurfaceHolder holder) {
         // The Surface has been created, acquire the camera and tell it where
         // to draw.
+    	Log.e(TAG, "surfaceCreated");
         try {
             if (mCamera != null) {
             	

@@ -1,4 +1,4 @@
-package com.smartglass.camera;
+package com.smartglass.device;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;

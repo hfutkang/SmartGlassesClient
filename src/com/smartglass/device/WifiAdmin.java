@@ -1,4 +1,4 @@
-package com.smartglass.camera;
+package com.smartglass.device;
 
 import java.net.Inet4Address;
 import java.util.List;
@@ -183,7 +183,6 @@ public class WifiAdmin {
 		}
 
 		System.out.println("WifiAdmin#connect");
-
 		WifiConfiguration wifiConfig = createWifiInfo(SSID, Password, Type);
 		//
 		if (wifiConfig == null) {
@@ -237,7 +236,7 @@ public class WifiAdmin {
 			config.wepTxKeyIndex = 0;
 		}
 		else if (Type == WifiCipherType.WIFICIPHER_WEP) {
-			config.preSharedKey = "\"" + Password + "\"";
+			config.preSharedKey = Password;
 			config.hiddenSSID = true;
 			config.allowedAuthAlgorithms
 					.set(WifiConfiguration.AuthAlgorithm.SHARED);
@@ -251,26 +250,28 @@ public class WifiAdmin {
 		}
 		else if (Type == WifiCipherType.WIFICIPHER_WPA) {
 
-			// config.preSharedKey = "\"" + Password + "\"";
-			// config.hiddenSSID = true;
-			// config.allowedAuthAlgorithms
-			// .set(WifiConfiguration.AuthAlgorithm.OPEN);
-			// config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-			// config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-			// config.allowedPairwiseCiphers
-			// .set(WifiConfiguration.PairwiseCipher.TKIP);
-			// config.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
-			// config.status = WifiConfiguration.Status.ENABLED;
-
-			config.preSharedKey = "\"" + Password + "\"";
-			config.hiddenSSID = true;
-			config.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-			config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-			config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-			config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-			// config.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
-			config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-			config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+			
+//			 config.preSharedKey = "\"" + Password + "\"";
+//			 Log.e(TAG, config.preSharedKey);
+//			 config.hiddenSSID = true;
+//			 config.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+//			 config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+//			 config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+//			 config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+//			 config.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+//			 config.status = WifiConfiguration.Status.ENABLED;
+			
+			config.preSharedKey = "\"" + Password + "\"";   
+			Log.e(TAG, config.preSharedKey);
+			config.hiddenSSID = true;       
+			config.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);       
+			config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);                             
+			config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);                             
+			config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);                        
+//			config.allowedProtocols.set(WifiConfiguration.Protocol.WPA);      
+			config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);    
+			config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);    
+			config.status = WifiConfiguration.Status.ENABLED;
 
 		} else {
 			return null;

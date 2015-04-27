@@ -1,4 +1,4 @@
-package com.smartglass.camera;
+package com.smartglass.device;
 
 import android.content.Context;
 import android.media.MediaScannerConnection;
