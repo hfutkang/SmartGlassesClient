@@ -6,7 +6,12 @@ import com.sctek.smartglasses.fragments.SettingFragment;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -76,6 +81,7 @@ public class MySideNavigationCallback implements ISideNavigationCallback {
 			
 			break;
 		case R.id.unbind:
+			showUbindDialog();
 //			unBond();
 			break;
 		case R.id.about_item:
@@ -113,5 +119,28 @@ public class MySideNavigationCallback implements ISideNavigationCallback {
 //				}
 //			    }).start();
 //	 }		
+	public void showUbindDialog() {
+		
+		AlertDialog.Builder builder = new Builder(mContext);
+		builder.setTitle(R.string.unbind);
+		builder.setNegativeButton(R.string.cancel, new OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		builder.setPositiveButton(R.string.ok, new OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				// TODO Auto-generated method stub
+//				unBond();
+			}
+		});
+		
+		builder.create().show();
+	}
 
 }

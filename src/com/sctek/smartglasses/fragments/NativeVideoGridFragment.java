@@ -231,7 +231,10 @@ public class NativeVideoGridFragment extends BaseFragment {
 		@Override
 		public void onClick(View v) {
 			// TODO Auto-generated method stub
-			onNativePhotoDeleteTvClicked("vedios");
+			if(selectedMedias.size() != 0)
+				onNativePhotoDeleteTvClicked("vedios");
+			else
+				disCheckMedia();
 			onCancelTvClicked();
 		}
 	};

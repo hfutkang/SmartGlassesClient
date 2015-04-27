@@ -8,6 +8,7 @@ import android.content.Context;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -25,10 +26,17 @@ public class WifiUtils {
 
 	public static void turnWifiApOn(Context mContext, WifiManager mWifiManager) {
 		
-		String ssid = ((TelephonyManager)mContext
+		String defaultSsid = ((TelephonyManager)mContext
 				.getSystemService(mContext.TELEPHONY_SERVICE)).getDeviceId();
+		String ssid = PreferenceManager.
+				getDefaultSharedPreferences(mContext).getString("ssid", defaultSsid);
+		
+		String pw = PreferenceManager.
+				getDefaultSharedPreferences(mContext).getString("pw", "12345678");
+		
 		WifiConfiguration wcfg = new WifiConfiguration();
-		wcfg.SSID = new String(ssid);
+//		wcfg.SSID = new String(ssid);
+		wcfg.SSID = ssid;
 		wcfg.networkId = 1;
 		wcfg.allowedAuthAlgorithms.clear();
 		wcfg.allowedGroupCiphers.clear();
@@ -37,9 +45,20 @@ public class WifiUtils {
 		wcfg.allowedProtocols.clear();
         
 		//wcfg.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN, true);
-		wcfg.wepKeys[0] = "";    
-		wcfg.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);    
-		wcfg.wepTxKeyIndex = 0;
+//		wcfg.wepKeys[0] = "";    
+//		wcfg.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);    
+//		wcfg.wepTxKeyIndex = 0;
+		
+		wcfg.preSharedKey = pw;     
+		wcfg.hiddenSSID = true;       
+		wcfg.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);       
+		wcfg.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);                             
+		wcfg.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);                             
+		wcfg.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);                        
+		wcfg.allowedProtocols.set(WifiConfiguration.Protocol.WPA);      
+		wcfg.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);    
+		wcfg.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);    
+		wcfg.status = WifiConfiguration.Status.ENABLED;  
 		
 		try {
 			Method method = mWifiManager.getClass().getMethod("setWifiApConfiguration", wcfg.getClass());
@@ -84,7 +103,6 @@ public class WifiUtils {
     }
 	
 	public static int setWifiApEnabled(boolean enabled, WifiManager mWifiManager) {
-		Log.e(TAG, "123");
 		Log.d("WifiAP", "*** setWifiApEnabled CALLED **** " + enabled);
 		if (enabled && mWifiManager.getConnectionInfo() !=null) {
 			mWifiManager.setWifiEnabled(false);

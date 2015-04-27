@@ -243,7 +243,10 @@ public class RemoteVideoGridFragment extends BaseFragment {
 		@Override
 		public void onClick(View v) {
 			// TODO Auto-generated method stub
-			onVideoDownloadTvClicked();
+			if(selectedMedias.size() != 0)
+				onVideoDownloadTvClicked();
+			else
+				disCheckMedia();
 			onCancelTvClicked();
 		}
 	};
@@ -281,7 +284,10 @@ public class RemoteVideoGridFragment extends BaseFragment {
 		@Override
 		public void onClick(View v) {
 			// TODO Auto-generated method stub
-			new RemoteVedioDeleteTask().execute();
+			if(selectedMedias.size() != 0)
+				new RemoteVedioDeleteTask().execute();
+			else
+				disCheckMedia();
 			onCancelTvClicked();
 		}
 	};
@@ -357,7 +363,7 @@ private class VideoDownloadTask extends AsyncTask<String, Integer, Void> {
 				refreshGallery("vedios");
 			}
 			disCheckMedia();
-			selectedMedias.clear();
+//			selectedMedias.clear();
 		}
 		
 		@Override

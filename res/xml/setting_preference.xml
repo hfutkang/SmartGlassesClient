@@ -49,5 +49,31 @@
 				android:entryValues="@array/media_pixel_values"
 				android:summary="@string/photo_pixel_summary"/>
 		</PreferenceCategory>
+		
+		<PreferenceCategory android:title="@string/other">
+		    
+		<com.sctek.smartglasses.ui.VolumeSeekBarPreference 
+		    android:title="@string/volume"
+		    android:key="volume"
+		    android:defaultValue="100"
+		    android:summary="@string/volume_summary"/>
+		
+		<Preference 
+		    android:title="@string/wifi_ap"
+		    android:key="wifi"
+		    android:summary="@string/wifi_ap_summary"/>
+		
+		<!-- <EditTextPreference 
+		    android:title="@string/glass_ssid"
+		    android:key="ssid"
+		    android:defaultValue=""
+		    android:summary="@string/glass_ssid_summary"/>
+		
+		<EditTextPreference 
+		    android:title="@string/glass_ap_pw"
+		    android:key="appw"
+		    android:defaultValue=""
+		    android:summary="@string/glass_appw_summary"/> -->
+		</PreferenceCategory>
 
 </PreferenceScreen>

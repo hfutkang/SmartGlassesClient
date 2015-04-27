@@ -289,7 +289,10 @@ public class RemotePhotoGridFragment extends BaseFragment {
 		@Override
 		public void onClick(View v) {
 			// TODO Auto-generated method stub
-			onPotoDownloadTvClicked();
+			if(selectedMedias.size() != 0)
+				onPotoDownloadTvClicked();
+			else
+				disCheckMedia();
 			onCancelTvClicked();
 		}
 	};
@@ -299,7 +302,10 @@ public class RemotePhotoGridFragment extends BaseFragment {
 		@Override
 		public void onClick(View v) {
 			// TODO Auto-generated method stub
-			new PhotoDeleteTask().execute();
+			if(selectedMedias.size() != 0)
+				new PhotoDeleteTask().execute();
+			else
+				disCheckMedia();
 			onCancelTvClicked();
 		}
 	};
@@ -395,7 +401,7 @@ public class RemotePhotoGridFragment extends BaseFragment {
 			}
 			
 			disCheckMedia();
-			selectedMedias.clear();
+//			selectedMedias.clear();
 		}
 		
 		@Override

@@ -66,7 +66,19 @@
     <string name="vedio_pixel_summary">选择录像的分辨率</string>
     <string name="photo_pixel_summary">选择拍照的分别率</string>
     <string name="bluetooth_error">蓝牙连接异常,请重试</string>
-
+    <string name="select_all">全选</string>
+    <string name="volume">音量</string>
+    <string name="volume_summary">眼镜音量控制</string>
+    <string name="other">其他</string>
+    <string name="glass_ssid">眼镜热点SSID</string>
+	<string name="glass_ssid_summary">设置眼镜热点的ssid</string>
+	<string name="glass_ap_pw">眼镜热点密码</string>
+	<string name="glass_appw_summary">设置眼镜热点的密码</string>
+	<string name="wifi_ap">Wifi热点</string>
+	<string name="wifi_ap_summary">设置Wifi热点信息</string>
+	<string name="wifi_ap_setting">Wifi热点设置</string>
+	<string name="empty_ssid">请输入热点的SSID</string>
+	<string name="pw_too_short">热点密码不能少于8位</string>
     <!-- quick sms -->
     <string name="respond_via_sms_custom_message">"custom message"</string>
     <string name="respond_via_sms_confirmation_format">"sms was send."</string>

@@ -2,6 +2,11 @@ package com.sctek.smartglasses.ui;
 
 import java.io.File;
 
+import com.ingenic.glass.api.sync.SyncChannel;
+import com.ingenic.glass.api.sync.SyncChannel.CONNECTION_STATE;
+import com.ingenic.glass.api.sync.SyncChannel.Packet;
+import com.ingenic.glass.api.sync.SyncChannel.RESULT;
+import com.ingenic.glass.api.sync.SyncChannel.onChannelListener;
 import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiscCache;
 import com.nostra13.universalimageloader.cache.disc.naming.Md5FileNameGenerator;
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -17,12 +22,14 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 public class MainActivity extends FragmentActivity {
 	
 	private  String TAG = "MainActivity";
-
+	
 	@SuppressLint("NewApi")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -46,16 +53,26 @@ public class MainActivity extends FragmentActivity {
 		
 	}
 	
+	private long currentTime = System.currentTimeMillis();
 	@SuppressLint("NewApi")
 	@Override
 	public void onBackPressed() {
 		// TODO Auto-generated method stub
 		
 		if(getFragmentManager().getBackStackEntryCount() != 0) {
-	        getFragmentManager().popBackStack();
-	    } else {
-	        super.onBackPressed();
-	    }
+			getFragmentManager().popBackStack();
+		} else {
+			
+			long tempTime = System.currentTimeMillis();
+			long interTime = tempTime - currentTime;
+			if(interTime > 2000) {
+				Toast.makeText(this, "再按一次退出程序", Toast.LENGTH_SHORT).show();
+				currentTime = tempTime;
+				return;
+			}
+			super.onBackPressed();
+			
+		}
 	}
 	
 	@Override
@@ -77,7 +94,7 @@ public class MainActivity extends FragmentActivity {
 		File cacheFile = StorageUtils.getOwnCacheDirectory(context, cacheDir);
 		ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(context)
 				.threadPriority(Thread.NORM_PRIORITY - 2)
-				.threadPoolSize(1)
+				.threadPoolSize(3)
 				.denyCacheImageMultipleSizesInMemory()
 				.diskCacheFileNameGenerator(new Md5FileNameGenerator())
 				.diskCacheSize(50 * 1024 * 1024) // 50 Mb

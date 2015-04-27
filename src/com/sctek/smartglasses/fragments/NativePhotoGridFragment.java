@@ -197,7 +197,10 @@ public class NativePhotoGridFragment extends BaseFragment {
 		@Override
 		public void onClick(View v) {
 			// TODO Auto-generated method stub
-			onNativePhotoDeleteTvClicked("photos");
+			if(selectedMedias.size() != 0)
+				onNativePhotoDeleteTvClicked("photos");
+			else
+				disCheckMedia();
 			onCancelTvClicked();
 		}
 	};

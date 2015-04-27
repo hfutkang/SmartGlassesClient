@@ -76,6 +76,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Parcelable;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.telephony.TelephonyManager;
@@ -167,7 +168,7 @@ public class BaseFragment extends Fragment {
 	public TextView cancelTv;
 	protected View enableApView;
 	protected Button enableApBt;
-	protected CheckBox selectAllRb;
+	protected CheckBox selectAllCb;
 	
 	private int childIndex;
 	
@@ -221,7 +222,7 @@ public class BaseFragment extends Fragment {
 		cancelTv = (TextView) view.findViewById(R.id.cancel_tv);
 		enableApView = view.findViewById(R.id.wifi_ap_hint_lo);
 		enableApBt = (Button)view.findViewById(R.id.wifi_ap_on_bt);
-		selectAllRb = (CheckBox)view.findViewById(R.id.select_all_cb);
+		selectAllCb = (CheckBox)view.findViewById(R.id.select_all_cb);
 		
 		cancelTv.setOnClickListener(new OnClickListener() {
 			
@@ -230,11 +231,11 @@ public class BaseFragment extends Fragment {
 				// TODO Auto-generated method stub
 				onCancelTvClicked();
 				disCheckMedia();
-				selectedMedias.clear();
+//				selectedMedias.clear();
 			}
 		});
 		
-		selectAllRb.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+		selectAllCb.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 			
 			@Override
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -595,13 +596,7 @@ public class BaseFragment extends Fragment {
 	}
 	
 	public void disCheckMedia() {
-		for(CheckBox cb : checkBoxs) {
-			try {
-			cb.setChecked(false);
-			} catch( Exception e) {
-				e.printStackTrace();
-			}
-		}
+		selectAllCb.setChecked(false);
 	}
 	
 	public void onNativePhotoDeleteTvClicked(String type) {
@@ -632,7 +627,7 @@ public class BaseFragment extends Fragment {
 		ArrayList<MediaData> tmp = new ArrayList<MediaData>(selectedMedias);
 		
 		disCheckMedia();
-		selectedMedias.clear();
+//		selectedMedias.clear();
 		
 		for(MediaData md : tmp) {
 			int i = mediaList.indexOf(md);
@@ -777,16 +772,20 @@ public class BaseFragment extends Fragment {
 			e.printStackTrace();  
 		}  
 		
-//		if(ip == null) {
-//			Packet packet = mChannel.createPacket();
-//			packet.putInt("type", 1);
-//			
-//			String ssid = ((TelephonyManager)mContext
-//					.getSystemService(mContext.TELEPHONY_SERVICE)).getDeviceId();
-//			packet.putString("ssid", ssid);
-//			
-//			mChannel.sendPacket(packet);
-//		}
+		if(ip == null) {
+			Packet packet = mChannel.createPacket();
+			packet.putInt("type", 1);
+			
+			String defaultSsid = ((TelephonyManager)mContext
+					.getSystemService(mContext.TELEPHONY_SERVICE)).getDeviceId();
+			String ssid = PreferenceManager.
+					getDefaultSharedPreferences(mContext).getString("ssid", defaultSsid);
+			String pw = PreferenceManager.getDefaultSharedPreferences(mContext).getString("pw", "12345678");
+			
+			packet.putString("ssid", ssid);
+			packet.putString("pw", pw);
+			mChannel.sendPacket(packet);
+		}
 		return ip;
 	} 
 	
