@@ -35,6 +35,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -90,6 +91,7 @@ public class SettingFragment extends PreferenceFragment implements Preference.On
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.setting_preference);
 		
+		getActivity().getActionBar().show();
 		getActivity().setTitle(R.string.setting);
 		getActivity().getActionBar().setDisplayHomeAsUpEnabled(false);
 		getActivity().getActionBar().setHomeButtonEnabled(false);
@@ -104,6 +106,26 @@ public class SettingFragment extends PreferenceFragment implements Preference.On
 		
 	}
 	
+	@Override
+	public void onDestroy() {
+		// TODO Auto-generated method stub
+		super.onDestroy();
+	}
+	
+	@Override
+	public void onDestroyView() {
+		// TODO Auto-generated method stub
+		super.onDestroyView();
+	}
+	
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		View view = super.onCreateView(inflater, container, savedInstanceState);
+//		view.setBackgroundColor(getResources().getColor(android.R.color.white));
+		return view;
+	}
 //	@Override
 //	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 //		// TODO Auto-generated method stub

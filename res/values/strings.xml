@@ -19,6 +19,7 @@
     <string name="download">下载</string>
     <string name="cancel">取消</string>
     <string name="wifi_ap_hint">浏览手机内容需要开启wifi热点功能</string>
+    <string name="live_wifi_ap_hint">直播需要开启wifi热点功能</string>
     <string name="turn_wifi_ap_on">现在开启</string>
     <string name="download_notification_title">Coldwave</string>
     <string name="title_activity_glasses_fragment">GlassesFragmentActivity</string>
@@ -71,14 +72,16 @@
     <string name="volume_summary">眼镜音量控制</string>
     <string name="other">其他</string>
     <string name="glass_ssid">眼镜热点SSID</string>
-	<string name="glass_ssid_summary">设置眼镜热点的ssid</string>
-	<string name="glass_ap_pw">眼镜热点密码</string>
-	<string name="glass_appw_summary">设置眼镜热点的密码</string>
-	<string name="wifi_ap">Wifi热点</string>
-	<string name="wifi_ap_summary">设置Wifi热点信息</string>
-	<string name="wifi_ap_setting">Wifi热点设置</string>
-	<string name="empty_ssid">请输入热点的SSID</string>
-	<string name="pw_too_short">热点密码不能少于8位</string>
+    <string name="glass_ssid_summary">设置眼镜热点的ssid</string>
+    <string name="glass_ap_pw">眼镜热点密码</string>
+    <string name="glass_appw_summary">设置眼镜热点的密码</string>
+    <string name="wifi_ap">Wifi热点</string>
+    <string name="wifi_ap_summary">设置Wifi热点信息</string>
+    <string name="wifi_ap_setting">Wifi热点设置</string>
+    <string name="empty_ssid">请输入热点的SSID</string>
+    <string name="pw_too_short">热点密码不能少于8位</string>
+    <string name="waiting_for_glass_connect">waiting for device connect#8230;#8230;#8230;</string>
+    <string name="video_live">直播</string>
     <!-- quick sms -->
     <string name="respond_via_sms_custom_message">"custom message"</string>
     <string name="respond_via_sms_confirmation_format">"sms was send."</string>
@@ -91,5 +94,9 @@
     <string name="sync_via_sms">"sync to watch"</string>
     <string name="sync_via_sms_content">sync the quick sms to watch"</string>
     <string name="title_activity_setting_fragment">SettingFragment</string>
+    <string name="title_activity_vedio_player">VedioPlayerActivity</string>
+    <string name="title_activity_photo">PhotoActivity</string>
+    <string name="title_activity_video">VideoActivity</string>
+    <string name="title_activity_setting">SettingActivity</string>
 
 </resources>

@@ -20,9 +20,9 @@
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.CALL_PHONE"/>
+    <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" />
-    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:name=".GlassesAplication"
@@ -46,11 +46,25 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
-        <service 
-            android:name="com.sctek.smartglasses.SmartGlassService">
+
+        <service android:name=".SmartGlassService" >
         </service>
-        
+
+        <activity android:name=".ui.VedioPlayerActivity" >
+        </activity>
+        <activity
+            android:name=".ui.PhotoActivity"
+            android:label="@string/title_activity_photo"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar" >
+        </activity>
+        <activity
+            android:name=".ui.VideoActivity"
+            android:label="@string/title_activity_video" >
+        </activity>
+        <activity
+            android:name="com.sctek.smartglasses.ui.SettingActivity"
+            android:label="@string/title_activity_setting" >
+        </activity>
     </application>
 
 </manifest>

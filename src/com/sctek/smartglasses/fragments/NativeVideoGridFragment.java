@@ -82,8 +82,8 @@ public class NativeVideoGridFragment extends BaseFragment {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		Log.e(TAG, "onCreate");
-		
 		onCreate = true;
+		getActivity().getActionBar().show();
 		getVideoPath();
 		
 		super.onCreate(savedInstanceState);
@@ -103,12 +103,11 @@ public class NativeVideoGridFragment extends BaseFragment {
 		// TODO Auto-generated method stub
 		Log.e(TAG, "onResume");
 		getActivity().setTitle(R.string.native_video);
-		getActivity().getActionBar().setDisplayHomeAsUpEnabled(true);
-		getActivity().getActionBar().setHomeButtonEnabled(true);
+//		getActivity().getActionBar().setDisplayHomeAsUpEnabled(true);
+//		getActivity().getActionBar().setHomeButtonEnabled(true);
 		
 		if(!onCreate) {
 			new Handler().post(new Runnable() {
-				
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub
@@ -116,9 +115,7 @@ public class NativeVideoGridFragment extends BaseFragment {
 					mImageAdapter.notifyDataSetChanged();
 				}
 			});
-			
 		}
-		
 		onCreate = false;
 		super.onResume();
 	}
@@ -130,6 +127,7 @@ public class NativeVideoGridFragment extends BaseFragment {
 		super.onPause();
 	}
 	
+	@SuppressLint("NewApi")
 	@Override
 	public void onDestroy() {
 		// TODO Auto-generated method stub
@@ -141,6 +139,8 @@ public class NativeVideoGridFragment extends BaseFragment {
 	public void onDestroyView() {
 		// TODO Auto-generated method stub
 		Log.e(TAG, "onDestroyView");
+		checkBoxs.clear();
+		selectedMedias.clear();
 		super.onDestroyView();
 	}
 	
@@ -202,9 +202,8 @@ public class NativeVideoGridFragment extends BaseFragment {
 			md.setUrl("content://media/external/video/media/" + cursor.getInt(0));
 			md.setName(cursor.getString(1));
 			mediaList.add(md);
-			
 		}
-		
+		cursor.close();
 	}
 	
 	@SuppressLint("NewApi")

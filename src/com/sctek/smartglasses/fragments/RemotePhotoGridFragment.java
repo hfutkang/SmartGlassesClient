@@ -399,7 +399,6 @@ public class RemotePhotoGridFragment extends BaseFragment {
 			if(downloadcount != 0) {
 				refreshGallery("photos");
 			}
-			
 			disCheckMedia();
 //			selectedMedias.clear();
 		}

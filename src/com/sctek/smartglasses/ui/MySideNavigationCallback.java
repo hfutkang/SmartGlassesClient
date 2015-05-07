@@ -85,8 +85,11 @@ public class MySideNavigationCallback implements ISideNavigationCallback {
 //			unBond();
 			break;
 		case R.id.about_item:
+			break;	
+		case R.id.video_live:
+			Intent intent = new Intent(mContext, VedioPlayerActivity.class);
+			mContext.startActivity(intent);
 			break;
-			
 		default:
 			break;
 		}

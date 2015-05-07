@@ -161,6 +161,7 @@ public class BaseFragment extends Fragment {
 	public View selectAllView;
 	
 	public boolean showImageCheckBox;
+	public boolean wifi_msg_received = false;
 	
 	public ImageAdapter mImageAdapter;
 	
@@ -283,7 +284,7 @@ public class BaseFragment extends Fragment {
 				break;
 		}
 			
-		initNavigationMenu(view);
+//		initNavigationMenu(view);
 		
 		return view;
 	}
@@ -404,12 +405,16 @@ public class BaseFragment extends Fragment {
 				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 					// TODO Auto-generated method stub
 					Log.e(TAG, "onCheckedChanged");
-					if(isChecked) {
-						if(!selectedMedias.contains(mediaList.get(imageIndex)))
+					try {
+						if(isChecked) {
+							if(!selectedMedias.contains(mediaList.get(imageIndex)))
 								selectedMedias.add(mediaList.get(imageIndex));
-					}
-					else {
-						selectedMedias.remove(mediaList.get(imageIndex));
+						}
+						else {
+							selectedMedias.remove(mediaList.get(imageIndex));
+						}
+					} catch (IndexOutOfBoundsException expected) {
+						
 					}
 				}
 			});
@@ -698,9 +703,13 @@ public class BaseFragment extends Fragment {
 		protected String doInBackground(String... type) {
 			// TODO Auto-generated method stub
 			String ip = null;
-			while((ip = getConnectedGlassIP()) == null) {
+			while(true) {
+				
+				ip = getConnectedGlassIP();
 				if(isCancelled())
 					return null;
+				if(ip != null)
+					break;
 				try {
 					Thread.sleep(5000);
 				} catch (Exception e) {
@@ -733,9 +742,12 @@ public class BaseFragment extends Fragment {
 	private class MyOnSyncListener implements SyncChannel.onChannelListener {
 	
 		@Override
-		public void onReceive(RESULT arg0, Packet arg1) {
+		public void onReceive(RESULT arg0, Packet data) {
 			// TODO Auto-generated method stub
 			Log.e(TAG, "Channel onReceive");
+			if(data.getBoolean("apres")) {
+				wifi_msg_received = true;
+			}
 		}
 	
 		@Override
@@ -772,7 +784,7 @@ public class BaseFragment extends Fragment {
 			e.printStackTrace();  
 		}  
 		
-		if(ip == null) {
+		if(ip == null&& !wifi_msg_received) {
 			Packet packet = mChannel.createPacket();
 			packet.putInt("type", 1);
 			

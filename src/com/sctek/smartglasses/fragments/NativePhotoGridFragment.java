@@ -18,6 +18,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.view.View.OnClickListener;
 import android.widget.CheckBox;
 
@@ -73,8 +74,8 @@ public class NativePhotoGridFragment extends BaseFragment {
 		// TODO Auto-generated method stub
 		Log.e(TAG, "onResume");
 		getActivity().setTitle(R.string.native_photo);
-		getActivity().getActionBar().setDisplayHomeAsUpEnabled(true);
-		getActivity().getActionBar().setHomeButtonEnabled(true);
+//		getActivity().getActionBar().setDisplayHomeAsUpEnabled(true);
+//		getActivity().getActionBar().setHomeButtonEnabled(true);
 		
 		if(!onCreate) {
 			new Handler().post(new Runnable() {
@@ -101,11 +102,11 @@ public class NativePhotoGridFragment extends BaseFragment {
 		super.onPause();
 	}
 	
+	@SuppressLint("NewApi")
 	@Override
 	public void onDestroy() {
 		// TODO Auto-generated method stub
 		Log.e(TAG, "onDestroy");
-//		mContext.unregisterReceiver(mDownloadBroadcastReceiver);
 		super.onDestroy();
 	}
 	
@@ -113,6 +114,8 @@ public class NativePhotoGridFragment extends BaseFragment {
 	public void onDestroyView() {
 		// TODO Auto-generated method stub
 		Log.e(TAG, "onDestroyView");
+		checkBoxs.clear();
+		selectedMedias.clear();
 		super.onDestroyView();
 	}
 	
@@ -171,6 +174,7 @@ public class NativePhotoGridFragment extends BaseFragment {
 			mediaList.add(md);
 			
 		}
+		cursor.close();
 	}
 	
 	@SuppressLint("NewApi")
